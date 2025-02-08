@@ -1,0 +1,50 @@
+server:
+  port: 8080
+ 
+spring:
+  application:
+    name: periodic-table
+  datasource:
+    url: jdbc:postgresql://localhost:5432/periodic
+    username: postgres
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      timeout: 60000
+      lecttuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 2
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${USERNAME_GMAIL}
+    password: ${PASSWORD_GMAIL}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            
+# Config jwt
+## env var
+periodic-table:
+ security:
+  authentication:
+   jwt:
+    # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
+    base64-secret: ${JWT_KEY}
+    # Token is valid 24 hours
+    token-validity-in-seconds: 86400
+    # RefreshToken is valid 7 days
+    refreshToken-validity-in-seconds: 604800
