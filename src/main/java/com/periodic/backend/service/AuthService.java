@@ -5,6 +5,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.periodic.backend.domain.entity.User;
@@ -36,7 +37,7 @@ public class AuthService {
 	private final UserService userService;
 	private final OtpService otpService;
 	private final EmailService emailService;
-	private final PasswordGenerator passwordGenerator;
+	private final PasswordEncoder passwordEncoder;
 	private final AuthenticationManagerBuilder authenticationManagerBuilder;
 	
 	public LoginResponse login(LoginRequest loginRequest) {
@@ -58,6 +59,7 @@ public class AuthService {
 				.accessToken(accessToken)
 				.email(currentEmail)
 				.name(currentUser.getName())
+				.avatar(currentUser.getAvatar())
 				.isActive(currentUser.isActive())
 				.role(currentUser.getRole().name())
 				.build();
@@ -79,9 +81,10 @@ public class AuthService {
 		}
 		// Step 2: Save new user with email and password hashed but pending
 		String password = registerRequest.getPassword();
+		String passwordHashed = passwordEncoder.encode(password);
 		User newUser = User.builder()
 				.email(email)
-				.password(password)
+				.password(passwordHashed)
 				.name(registerRequest.getName())
 				.role(Role.USER)
 				.status(Status.PENDING_VERIFICATION)
@@ -116,8 +119,13 @@ public class AuthService {
 			verifyStatus = VerifyOTPStatus.SUCCESS.name();
 			verifyOTPResponse.setVerifyStatus(verifyStatus);
 			// Set status for user
-			userService.updateStatusUser(email, Status.VERIFIED);
-			userService.updateActiveUser(email, true);
+			User user = userService.getUserByEmail(email);
+			user.setStatus(Status.VERIFIED);
+			boolean isActive = true;
+			user.setActive(isActive);
+			userService.saveUser(user);
+		} else {
+			throw new AppException(ErrorCode.OTP_NOT_FOUND);
 		}
 		return verifyOTPResponse;
 	}
@@ -133,24 +141,39 @@ public class AuthService {
 	private void sendOTPToEmail(String email) {
 		String otp = otpService.generateOTP(email);
 		String contentHtml = "<h1>Your OTP is: </h1> " + "<b>"+ otp + "</b>";
+		boolean isMultipart = false;
+		boolean isHtml = true;
 		emailService.sendEmailSync(email, "VERIFY YOUR EMAIL", 
-				contentHtml, false, true);
+				contentHtml, isMultipart, isHtml);
 	}
 	
+	// call api send otp
+	// verify otp -> set new password
 	public ResetPasswordResponse resetPassword(ResetPasswordRequest resetPasswordRequest) {
-		// Step 1: Generate new password
-		String newPassword = passwordGenerator.generateNewPassword();
-		// Step 2: Set new password for user
-		User user = userService.getUserByEmail(resetPasswordRequest.getEmail());
-		user.setPassword(newPassword);
-		userService.saveUser(user);
-		// Step 3: Send new password to email
+		// Step 1: Ensure password and confirm password are valid match
+		String password = resetPasswordRequest.getPassword();
+		String passwordConfirm = resetPasswordRequest.getPasswordConfirm();
+		if(!password.equals(passwordConfirm)) {
+			throw new AppException(ErrorCode.PASSWORDCONFIRM_NOT_MATCH);
+		}
+		// Step 2: Verify OTP
 		String email = resetPasswordRequest.getEmail();
-		String contentHtml = "<h1>Your new password is: </h1> " + "<b>"+ newPassword + "</b>";
-		emailService.sendEmailSync(email, "NEW PASSWORD", 
-				contentHtml, false, true);
-		// Step 4: Build response
-		return ResetPasswordResponse.builder().email(email).build();
+		String otp = resetPasswordRequest.getOtp();
+		String verifyStatus = VerifyOTPStatus.FAILED.name();
+		if(otpService.verifyOTP(email, otp)) {
+			verifyStatus = VerifyOTPStatus.SUCCESS.name();
+			// Set new password for user
+			User user = userService.getUserByEmail(email);
+			String passwordHashed = passwordEncoder.encode(password);
+			user.setPassword(passwordHashed);
+			userService.saveUser(user);
+		} else {
+			throw new AppException(ErrorCode.OTP_NOT_FOUND);
+		}
+		
+		// Step 3: Build response
+		return ResetPasswordResponse.builder().email(email)
+				.verifyStatus(verifyStatus).build();
 	}
 	
 	public Tokens handleRefreshToken(User user) {

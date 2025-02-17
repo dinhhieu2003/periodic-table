@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserService {
 	private final UserRepository userRepository;
-	private final PasswordEncoder passwordEncoder;
 	
 	public void updateRefreshToken(User user, String refreshToken) {
 		user.setRefreshToken(refreshToken);
@@ -29,8 +28,6 @@ public class UserService {
 	}
 	
 	public User saveUser(User user) {
-		String hashedPassword = passwordEncoder.encode(user.getPassword());
-		user.setPassword(hashedPassword);
 		return userRepository.save(user);
 	}
 	
@@ -48,18 +45,6 @@ public class UserService {
 	public boolean userIsExisted(String email) {
 		Optional<User> userOption = userRepository.findByEmail(email);
 		return userOption.isPresent();
-	}
-	
-	public void updateStatusUser(String email, Status status) {
-		User user = getUserByEmail(email);
-		user.setStatus(status);
-		userRepository.save(user);
-	}
-	
-	public void updateActiveUser(String email, boolean isActive) {
-		User user = getUserByEmail(email);
-		user.setActive(isActive);
-		userRepository.save(user);
 	}
 	
 	public void deleteUser(String email) {

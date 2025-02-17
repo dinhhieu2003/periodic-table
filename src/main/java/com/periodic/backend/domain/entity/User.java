@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.periodic.backend.util.constant.Role;
 import com.periodic.backend.util.constant.Status;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -34,6 +35,9 @@ public class User extends BaseEntity implements UserDetails {
 	private String password;
 	private String email;
 	private String name;
+	private String avatar;
+	@JsonIgnore
+	@Column(columnDefinition = "TEXT")
 	private String refreshToken;
 	@Enumerated(EnumType.STRING)
     private Role role;
