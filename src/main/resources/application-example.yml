@@ -5,8 +5,8 @@ spring:
   application:
     name: periodic-table
   datasource:
-    url: jdbc:postgresql://localhost:5432/periodic
-    username: postgres
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -15,7 +15,7 @@ spring:
     show-sql: true
   data:
     redis:
-      host: localhost
+      host: ${HOST}
       port: 6379
       password: ${REDIS_PASSWORD}
       timeout: 60000
