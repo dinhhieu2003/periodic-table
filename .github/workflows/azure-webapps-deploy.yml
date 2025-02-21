@@ -46,7 +46,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ env.REPO }}:${{ github.sha }}
+          tags: |
+            ghcr.io/${{ env.REPO }}/backend:${{ github.sha }}
+            ghcr.io/${{ env.REPO }}/backend:latest
           file: ./Dockerfile
       - name: Azure CLI Login
         uses: azure/login@v2
