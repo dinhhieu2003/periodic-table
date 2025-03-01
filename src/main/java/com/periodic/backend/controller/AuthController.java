@@ -46,6 +46,14 @@ public class AuthController {
 	public ResponseEntity<VerifyOTPResponse> verifyOTP(@RequestBody VerifyOTPRequest verifyOTPRequest) {
 		return ResponseEntity.ok(authService.verifyOTP(verifyOTPRequest));
 	}
+	@PostMapping("/verify-register")
+	public ResponseEntity<VerifyOTPResponse> verifyOTPRegister(@RequestBody VerifyOTPRequest verifyOTPRequest) {
+		return ResponseEntity.ok(authService.verifyOTPForRegister(verifyOTPRequest));
+	}
+	@PostMapping("/verify-change-email")
+	public ResponseEntity<VerifyOTPResponse> verifyOTPChangeEmail(@RequestBody VerifyOTPRequest verifyOTPRequest) {
+		return ResponseEntity.ok(authService.verifyOTPChangeEmail(verifyOTPRequest));
+	}
 	@PostMapping("/sendOTP")
 	public ResponseEntity<SendOTPResponse> sendOTP(@RequestBody SendOTPRequest sendOTPRequest) {
 		return ResponseEntity.ok(authService.sendOTP(sendOTPRequest));

@@ -22,6 +22,7 @@ import com.periodic.backend.domain.response.auth.Tokens;
 import com.periodic.backend.domain.response.auth.VerifyOTPResponse;
 import com.periodic.backend.exception.AppException;
 import com.periodic.backend.security.JwtTokenUtils;
+import com.periodic.backend.security.SecurityUtils;
 import com.periodic.backend.util.PasswordGenerator;
 import com.periodic.backend.util.constant.ErrorCode;
 import com.periodic.backend.util.constant.Role;
@@ -29,9 +30,11 @@ import com.periodic.backend.util.constant.Status;
 import com.periodic.backend.util.constant.VerifyOTPStatus;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 	private final JwtTokenUtils jwtTokenUtils;
 	private final UserService userService;
@@ -103,30 +106,58 @@ public class AuthService {
 		return registerResponse;
 	}
 	
-	public VerifyOTPResponse verifyOTP(VerifyOTPRequest verifyOTPRequest) {
-		// Step 1: Get email and otp from request to verify
+	public VerifyOTPResponse verifyOTPForRegister(VerifyOTPRequest verifyOTPRequest) {
 		String email = verifyOTPRequest.getEmail();
 		String otp = verifyOTPRequest.getOtp();
-		// Set default verifyStatus is FAILED
-		String verifyStatus = VerifyOTPStatus.FAILED.name();
 		
-		// Step 2: Build VerifyOTPResponse
-		VerifyOTPResponse verifyOTPResponse = new VerifyOTPResponse();
-		verifyOTPResponse.setEmail(email);
-		verifyOTPResponse.setVerifyStatus(verifyStatus);
 		// Verify OTP
-		if(otpService.verifyOTP(email, otp)) {
-			verifyStatus = VerifyOTPStatus.SUCCESS.name();
-			verifyOTPResponse.setVerifyStatus(verifyStatus);
-			// Set status for user
-			User user = userService.getUserByEmail(email);
-			user.setStatus(Status.VERIFIED);
-			boolean isActive = true;
-			user.setActive(isActive);
-			userService.saveUser(user);
-		} else {
+		if(!otpService.verifyOTP(email, otp)) {
+			log.error("OTP that user sent was not found in Redis");
 			throw new AppException(ErrorCode.OTP_NOT_FOUND);
 		}
+		
+		// Set status VERIFIED for user
+		User user = userService.getUserByEmail(email);
+		user.setStatus(Status.VERIFIED);
+		user.setActive(true);
+		userService.saveUser(user);
+		
+		VerifyOTPResponse verifyOTPResponse = new VerifyOTPResponse();
+		verifyOTPResponse.setEmail(email);
+		verifyOTPResponse.setVerifyStatus(VerifyOTPStatus.SUCCESS.name());
+
+		otpService.deleteOTP(email);
+		
+		return verifyOTPResponse;
+	}
+	
+	public VerifyOTPResponse verifyOTPChangeEmail(VerifyOTPRequest verifyOTPRequest) {
+		String newEmail = verifyOTPRequest.getEmail();
+		String otp = verifyOTPRequest.getOtp();
+		
+		if(userService.userIsExisted(newEmail)) {
+			throw new AppException(ErrorCode.USER_ALREADY_EXISTS);
+		}
+		
+		// Verify OTP
+		if(!otpService.verifyOTP(newEmail, otp)) {
+			log.error("OTP that user sent was not found in Redis");
+			throw new AppException(ErrorCode.OTP_NOT_FOUND);
+		}
+		
+		// Change email for current user
+		String email = SecurityUtils.getCurrentUserLogin()
+				.orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+		User currentUser = userService.getUserByEmail(email);
+		currentUser.setEmail(newEmail);
+		userService.saveUser(currentUser);
+		
+		VerifyOTPResponse verifyOTPResponse = new VerifyOTPResponse();
+		verifyOTPResponse.setEmail(email);
+		verifyOTPResponse.setVerifyStatus(VerifyOTPStatus.SUCCESS.name());
+
+		otpService.deleteOTP(email);
+		
 		return verifyOTPResponse;
 	}
 	
@@ -159,21 +190,38 @@ public class AuthService {
 		// Step 2: Verify OTP
 		String email = resetPasswordRequest.getEmail();
 		String otp = resetPasswordRequest.getOtp();
-		String verifyStatus = VerifyOTPStatus.FAILED.name();
-		if(otpService.verifyOTP(email, otp)) {
-			verifyStatus = VerifyOTPStatus.SUCCESS.name();
-			// Set new password for user
-			User user = userService.getUserByEmail(email);
-			String passwordHashed = passwordEncoder.encode(password);
-			user.setPassword(passwordHashed);
-			userService.saveUser(user);
-		} else {
+		if(!otpService.verifyOTP(email, otp)) {
+			log.error("OTP that user sent was not found in Redis");
 			throw new AppException(ErrorCode.OTP_NOT_FOUND);
 		}
+		// Set new password for user
+		User user = userService.getUserByEmail(email);
+		String passwordHashed = passwordEncoder.encode(password);
+		user.setPassword(passwordHashed);
+		userService.saveUser(user);
+		
+		otpService.deleteOTP(email);
 		
 		// Step 3: Build response
 		return ResetPasswordResponse.builder().email(email)
-				.verifyStatus(verifyStatus).build();
+				.verifyStatus(VerifyOTPStatus.SUCCESS.name()).build();
+	}
+	
+	public VerifyOTPResponse verifyOTP(VerifyOTPRequest verifyOTPRequest) {
+		String email = verifyOTPRequest.getEmail();
+		String otp = verifyOTPRequest.getOtp();
+		
+		// Verify OTP
+		if(!otpService.verifyOTP(email, otp)) {
+			log.error("OTP that user sent was not found in Redis");
+			throw new AppException(ErrorCode.OTP_NOT_FOUND);
+		}
+		
+		VerifyOTPResponse verifyOTPResponse = new VerifyOTPResponse();
+		verifyOTPResponse.setEmail(email);
+		verifyOTPResponse.setVerifyStatus(VerifyOTPStatus.SUCCESS.name());
+		
+		return verifyOTPResponse;
 	}
 	
 	public Tokens handleRefreshToken(User user) {
