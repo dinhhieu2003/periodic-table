@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -17,17 +19,24 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
+import com.periodic.backend.exception.AppException;
 import com.periodic.backend.security.JwtTokenUtils;
+import com.periodic.backend.util.constant.ErrorCode;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityJwtConfiguration {
-	private static final Logger LOG = LoggerFactory.getLogger(SecurityJwtConfiguration.class);
+	private static final Logger log = LoggerFactory.getLogger(SecurityJwtConfiguration.class);
+	
+	private final RedisTemplate<String, String> redisTemplate;
 	@Value("${periodic-table.security.authentication.jwt.base64-secret}")
 	private String jwtKey;
 	
 	@Bean
     public JwtEncoder jwtEncoder() {
-		LOG.debug("Encoder");
+		log.debug("Encoder");
         return new NimbusJwtEncoder(new ImmutableSecret<>(getSecretKey()));
     }
 	
@@ -36,12 +45,25 @@ public class SecurityJwtConfiguration {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(
                 getSecretKey()).macAlgorithm(JwtTokenUtils.JWT_ALGORITHM).build();
         return token -> {
+        	Jwt jwt;
             try {
-                return jwtDecoder.decode(token);
+            	jwt = jwtDecoder.decode(token);
             } catch (Exception e) {
-                LOG.debug(">>> JWT error: " + e.getMessage());
-                throw e;
+                log.error(">>> JWT error: {}", e.getMessage(), e);
+                throw new AppException(ErrorCode.TOKEN_NOT_VALID);
             }
+            
+            String tokenId = jwt.getId();
+            if(tokenId == null) {
+            	log.warn("JWT token doesn't contain an ID (jti claim)");
+            	return jwt;
+            }
+            // Check token absent in blacklist
+        	if(redisTemplate.opsForValue().get(tokenId) != null) {
+        		log.error("Token {} is blacklisted", tokenId);
+        		throw new AppException(ErrorCode.TOKEN_NOT_VALID);
+        	}
+        	return jwt;
         };
     }
 
@@ -52,13 +74,12 @@ public class SecurityJwtConfiguration {
     
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new
-                JwtGrantedAuthoritiesConverter();
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         grantedAuthoritiesConverter.setAuthorityPrefix("");
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("permission");
-        JwtAuthenticationConverter jwtAuthenticationConverter = new
-                JwtAuthenticationConverter();
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+
         return jwtAuthenticationConverter;
     }
 }

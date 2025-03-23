@@ -17,7 +17,11 @@ public enum ErrorCode {
 	USER_NOT_FOUND(1007, "User not found", HttpStatus.NOT_FOUND),
 	USER_IS_INACTIVE(1008, "Account has been disabled", HttpStatus.FORBIDDEN),
 	OTP_NOT_FOUND(1009, "OTP has been expired or wrong", HttpStatus.NOT_FOUND),
-	PASSWORDCONFIRM_NOT_MATCH(1010, "Password and confirm password not match", HttpStatus.BAD_REQUEST);
+	PASSWORDCONFIRM_NOT_MATCH(1010, "Password and confirm password not match", HttpStatus.BAD_REQUEST),
+	
+	// ====== ELEMENT =====
+	ELEMENT_ALREADY_EXISTS(2001, "Element is already exists", HttpStatus.BAD_REQUEST),
+	ELEMENT_NOT_FOUND(2002, "Element not found", HttpStatus.NOT_FOUND);
 	
 	private final int code;
 	private final String message;

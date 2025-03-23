@@ -1,11 +1,19 @@
 package com.periodic.backend.service;
 
+import java.time.Duration;
+import java.time.Instant;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 
 import com.periodic.backend.domain.entity.User;
@@ -23,25 +31,28 @@ import com.periodic.backend.domain.response.auth.VerifyOTPResponse;
 import com.periodic.backend.exception.AppException;
 import com.periodic.backend.security.JwtTokenUtils;
 import com.periodic.backend.security.SecurityUtils;
-import com.periodic.backend.util.PasswordGenerator;
 import com.periodic.backend.util.constant.ErrorCode;
 import com.periodic.backend.util.constant.Role;
 import com.periodic.backend.util.constant.Status;
 import com.periodic.backend.util.constant.VerifyOTPStatus;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AuthService {
+	
+	private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+	
 	private final JwtTokenUtils jwtTokenUtils;
 	private final UserService userService;
 	private final OtpService otpService;
 	private final EmailService emailService;
 	private final PasswordEncoder passwordEncoder;
 	private final AuthenticationManagerBuilder authenticationManagerBuilder;
+	private final JwtDecoder jwtDecoder;
+	private final RedisTemplate<String, String> redisTemplate;
+	private final long EXTRA_MINUTES_ENSURE_INVALIDATION = 1;
 	
 	public LoginResponse login(LoginRequest loginRequest) {
 		// Step 1: Save authentication token into security context
@@ -66,6 +77,7 @@ public class AuthService {
 				.isActive(currentUser.isActive())
 				.role(currentUser.getRole().name())
 				.build();
+		log.info("User {} login success", currentEmail);
 		return loginResponse;
 	}
 	
@@ -239,5 +251,24 @@ public class AuthService {
 	    	email = authentication.getName();
 	    }
 	    return email;
+	}
+	
+	public void logout() {
+		log.info("Start logout function");
+		String token = SecurityUtils.getCurrentUserJWT()
+				.orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+		// Calculate remaining time of this token, that is also expiry in redis
+		Jwt jwt = jwtDecoder.decode(token);
+		Instant expiresAt = jwt.getExpiresAt();
+		Instant currentTime = Instant.now();
+		long remainingTimeMinutes = Math.max(0, 
+	            Duration.between(currentTime, expiresAt).toMinutes() + EXTRA_MINUTES_ENSURE_INVALIDATION);
+		// Put this token into blacklist
+		redisTemplate.opsForValue().set(
+                jwt.getId(), 
+                "revoked", 
+                Duration.ofMinutes(remainingTimeMinutes)
+         );
+		log.info("End: Logout function");
 	}
 }

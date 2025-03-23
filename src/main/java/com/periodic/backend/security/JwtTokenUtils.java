@@ -2,8 +2,11 @@ package com.periodic.backend.security;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -48,6 +51,10 @@ public class JwtTokenUtils {
                 .expiresAt(validity)
                 .subject(user.getEmail())
                 .claim("user", userToken)
+                .claim("roles", user.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.toList()))
+                .id(UUID.randomUUID().toString())
                 .build();
 
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
@@ -71,6 +78,10 @@ public class JwtTokenUtils {
                 .expiresAt(validity)
                 .subject(user.getEmail())
                 .claim("user", userToken)
+                .claim("roles", user.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.toList()))
+                .id(UUID.randomUUID().toString())
                 .build();
 
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
