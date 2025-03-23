@@ -22,8 +22,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Scientist extends BaseEntity {
 	private String name;
-	private int birthYear;
-	private int deathYear;
+	private Integer birthYear;
+	private Integer deathYear;
 	private String nationality;
 	@Column(columnDefinition = "TEXT")
 	private String contribution;
