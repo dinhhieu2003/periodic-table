@@ -44,6 +44,7 @@ public class AuthController {
 		LoginResponse loginResponse = authService.login(loginRequest);
 		return ResponseEntity.ok(loginResponse);
 	}
+	@Operation(summary = "Logout of the application")
 	@GetMapping("/logout")
 	public ResponseEntity<?> logout() {
 		var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -51,31 +52,37 @@ public class AuthController {
 		authService.logout();
 		return null;
 	}
+	@Operation(summary = "Register new user using email")
 	@PostMapping("/register")
 	public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
 		log.info("Someone is registering");
 		return ResponseEntity.ok(authService.register(registerRequest));
 	}
+	@Operation(summary = "Verify OTP without delete OTP")
 	@PostMapping("/verify")
 	public ResponseEntity<VerifyOTPResponse> verifyOTP(@RequestBody VerifyOTPRequest verifyOTPRequest) {
 		log.info("Email {} is verifying OTP", verifyOTPRequest.getEmail());
 		return ResponseEntity.ok(authService.verifyOTP(verifyOTPRequest));
 	}
+	@Operation(summary = "Verify OTP for register feature")
 	@PostMapping("/verify-register")
 	public ResponseEntity<VerifyOTPResponse> verifyOTPRegister(@RequestBody VerifyOTPRequest verifyOTPRequest) {
 		log.info("Email {} is verifying OTP for register", verifyOTPRequest.getEmail());
 		return ResponseEntity.ok(authService.verifyOTPForRegister(verifyOTPRequest));
 	}
+	@Operation(summary = "Verify OTP for change email feature")
 	@PostMapping("/verify-change-email")
 	public ResponseEntity<VerifyOTPResponse> verifyOTPChangeEmail(@RequestBody VerifyOTPRequest verifyOTPRequest) {
 		log.info("Email {} is verifying OTP for change email", verifyOTPRequest.getEmail());
 		return ResponseEntity.ok(authService.verifyOTPChangeEmail(verifyOTPRequest));
 	}
+	@Operation(summary = "Use for resending OTP")
 	@PostMapping("/sendOTP")
 	public ResponseEntity<SendOTPResponse> sendOTP(@RequestBody SendOTPRequest sendOTPRequest) {
 		log.info("Email {} is requesting server send OTP", sendOTPRequest.getEmail());
 		return ResponseEntity.ok(authService.sendOTP(sendOTPRequest));
 	}
+	@Operation(summary = "Reset password use email and OTP")
 	@PostMapping("/reset-password")
 	public ResponseEntity<ResetPasswordResponse> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
 		log.info("Email {} is requesting reset password", resetPasswordRequest.getEmail());

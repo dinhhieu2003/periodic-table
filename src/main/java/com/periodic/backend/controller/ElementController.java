@@ -28,6 +28,7 @@ import com.periodic.backend.service.ElementService;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.PaginationParam;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class ElementController {
 	private final ElementService elementService;
 	private final Logger log = LoggerFactory.getLogger(ElementController.class);
 	
+	@Operation(summary = "Create new element (admin)")
 	@PostMapping("")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<CreateElementResponse> createElement(@RequestBody @Valid CreateElementRequest createElementRequest) {
@@ -47,6 +49,7 @@ public class ElementController {
 		return ResponseEntity.ok(elementService.createElement(createElementRequest));
 	}
 	
+	@Operation(summary = "Get elements pageable")
 	@GetMapping("")
 	public ResponseEntity<PaginationResponse<List<GetElementResponse>>> getElements(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
@@ -57,12 +60,14 @@ public class ElementController {
 		return ResponseEntity.ok(elementService.getElements(pageable, term));
 	}
 	
+	@Operation(summary = "Get one element by id")
 	@GetMapping("/{id}")
 	public ResponseEntity<GetElementResponse> getElement(@PathVariable long id) {
 		log.info("User getting element id {}", id);
 		return ResponseEntity.ok(elementService.getElement(id));
 	}
 	
+	@Operation(summary = "Update an element by id (admin)")
 	@PutMapping("/{id}")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<UpdateElementResponse> updateElement(@RequestBody @Valid UpdateElementRequest updateElementRequest, @PathVariable long id) {
@@ -71,6 +76,7 @@ public class ElementController {
 	}
 	
 	// Patch mapping for toggle active
+	@Operation(summary = "Toggle active for an element by id (admin)")
 	@PatchMapping("/{id}/toggle-active")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<ToggleActiveElementResponse> toggleActive(@PathVariable Long id) {

@@ -28,6 +28,7 @@ import com.periodic.backend.service.ScientistService;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.PaginationParam;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class ScientistController {
 	private final Logger log = LoggerFactory.getLogger(ScientistController.class);
 	private final ScientistService scientistService;
 	
+	@Operation(summary = "Create new scientist (admin)")
 	@PostMapping("")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<CreateScientistResponse> createScientist(@RequestBody @Valid CreateScientistRequest createScientistRequest) {
@@ -66,6 +68,7 @@ public class ScientistController {
 	}
 	
 	// update
+	@Operation(summary = "Update a scientist by scientist id (admin)")
 	@PutMapping("/{id}")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<UpdateScientistResponse> updateScientist(@PathVariable Long id, 
@@ -75,6 +78,7 @@ public class ScientistController {
 	}
 	
 	// toggle active
+	@Operation(summary = "Toggle active for a scientist by scientist id (admin)")
 	@PatchMapping("/{id}/toggle-active")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<ToggleActiveScientistResponse> toggleActive(@PathVariable Long id) {

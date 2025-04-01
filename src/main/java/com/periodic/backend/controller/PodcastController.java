@@ -28,6 +28,7 @@ import com.periodic.backend.service.PodcastService;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.PaginationParam;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class PodcastController {
 	private final PodcastService podcastService;
 	
 	// create 
+	@Operation(summary = "Create new podcast (admin)")
 	@PostMapping("")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<CreatePodcastResponse> createPodcast(@Valid @RequestBody CreatePodcastRequest request) {
@@ -49,6 +51,7 @@ public class PodcastController {
 	}
 	
 	// get all
+	@Operation(summary = "Get podcasts pageable")
 	@GetMapping("")
 	public ResponseEntity<PaginationResponse<List<GetPodcastResponse>>> getPodcasts(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
@@ -60,6 +63,7 @@ public class PodcastController {
 	}
 	
 	// get one
+	@Operation(summary = "Get one podcast by id")
 	@GetMapping("/{id}")
 	public ResponseEntity<GetPodcastResponse> getPodcast(@PathVariable Long id) {
 		log.info("User is getting a podcast id {}", id);
@@ -67,6 +71,7 @@ public class PodcastController {
 	}
 	
 	// update
+	@Operation(summary = "Update a podcast by podcast id (admin)")
 	@PutMapping("/{id}")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<UpdatePodcastResponse> updatePodcast(
@@ -77,6 +82,7 @@ public class PodcastController {
 	}
 	
 	// toggle active
+	@Operation(summary = "Toggle active for a podcast by podcast id (admin)")
 	@PatchMapping("/{id}/toggle-active")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<ToggleActivePodcastResponse> toggleActive(@PathVariable Long id) {

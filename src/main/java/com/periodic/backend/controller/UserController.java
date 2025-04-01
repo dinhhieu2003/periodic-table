@@ -32,6 +32,7 @@ import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.ErrorCode;
 import com.periodic.backend.util.constant.PaginationParam;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -47,6 +48,7 @@ public class UserController {
 		return ResponseEntity.ok(userService.changePassword(changePasswordRequest));
 	}
 	
+	@Operation(summary = "Get users pageable")
 	@GetMapping("")
 	public ResponseEntity<PaginationResponse<List<User>>> getUsers(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
@@ -56,11 +58,13 @@ public class UserController {
 		return ResponseEntity.ok(userService.getUsers(pageable, term));
 	}
 	
+	@Operation(summary = "Get one user by user id")
 	@GetMapping("/{id}")
 	public ResponseEntity<User> getUser(@PathVariable Long id) {
 		return ResponseEntity.ok(userService.getUser(id));
 	}
 	
+	@Operation(summary = "Update profile")
 	@PutMapping("")
 	public ResponseEntity<User> updateUser(@RequestBody UpdateUserRequest updateUser) {
 		String email = SecurityUtils.getCurrentUserLogin()
@@ -71,6 +75,7 @@ public class UserController {
 		return ResponseEntity.ok(userService.saveUser(user));
 	}
 	
+	@Operation(summary = "Update role for a user by user id")
 	@PatchMapping("/{id}/roles")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<UpdateUserRoleResponse> updateRoleUser(@PathVariable Long id,
@@ -79,6 +84,7 @@ public class UserController {
 		return ResponseEntity.ok(userService.updateRole(id, updateUserRoleRequest));
 	}
 	
+	@Operation(summary = "Toggle active for a user by user id")
 	@PatchMapping("/{id}/toggle-active")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<ToggleActiveResponse> toggleActiveUser(@PathVariable Long id) {
