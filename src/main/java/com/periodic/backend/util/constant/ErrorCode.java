@@ -21,7 +21,15 @@ public enum ErrorCode {
 	
 	// ====== ELEMENT =====
 	ELEMENT_ALREADY_EXISTS(2001, "Element is already exists", HttpStatus.BAD_REQUEST),
-	ELEMENT_NOT_FOUND(2002, "Element not found", HttpStatus.NOT_FOUND);
+	ELEMENT_NOT_FOUND(2002, "Element not found", HttpStatus.NOT_FOUND),
+	
+	// ====== SCIENTIST ====
+	SCIENTIST_ALREADY_EXISTS(3001, "Scientist is already exists", HttpStatus.BAD_REQUEST),
+	SCIENTIST_NOT_FOUND(3002, "Scientist not found", HttpStatus.NOT_FOUND),
+	
+	// ====== PODCAST ======
+	PODCAST_ALREADY_EXISTS(4001, "Podcast is already exists", HttpStatus.BAD_REQUEST),
+	PODCAST_NOT_FOUND(4002, "Podcast not found", HttpStatus.NOT_FOUND);
 	
 	private final int code;
 	private final String message;

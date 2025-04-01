@@ -14,6 +14,7 @@ import com.periodic.backend.domain.request.element.CreateElementRequest;
 import com.periodic.backend.domain.request.element.UpdateElementRequest;
 import com.periodic.backend.domain.response.element.CreateElementResponse;
 import com.periodic.backend.domain.response.element.GetElementResponse;
+import com.periodic.backend.domain.response.element.ToggleActiveElementResponse;
 import com.periodic.backend.domain.response.element.UpdateElementResponse;
 
 
@@ -36,4 +37,8 @@ public interface ElementMapper {
 	
 	Element updateElementRequestToElement(UpdateElementRequest updateElementRequest); 
 	UpdateElementResponse elementToUpdateElementResponse(Element element);
+	
+	default ToggleActiveElementResponse elementToToggleActiveElementResponse(Element element) {
+		return new ToggleActiveElementResponse(element.getId(), element.isActive());
+	}
 }

@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -20,6 +21,7 @@ import com.periodic.backend.domain.request.element.CreateElementRequest;
 import com.periodic.backend.domain.request.element.UpdateElementRequest;
 import com.periodic.backend.domain.response.element.CreateElementResponse;
 import com.periodic.backend.domain.response.element.GetElementResponse;
+import com.periodic.backend.domain.response.element.ToggleActiveElementResponse;
 import com.periodic.backend.domain.response.element.UpdateElementResponse;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.service.ElementService;
@@ -66,5 +68,13 @@ public class ElementController {
 	public ResponseEntity<UpdateElementResponse> updateElement(@RequestBody @Valid UpdateElementRequest updateElementRequest, @PathVariable long id) {
 		log.info("Admin updating element id {}", id);
 		return ResponseEntity.ok(elementService.updateElement(updateElementRequest, id));
+	}
+	
+	// Patch mapping for toggle active
+	@PatchMapping("/{id}/toggle-active")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<ToggleActiveElementResponse> toggleActive(@PathVariable Long id) {
+		log.info("Admin is changing active for element id {}", id);
+		return ResponseEntity.ok(elementService.toggleActive(id));
 	}
 }

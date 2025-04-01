@@ -13,6 +13,7 @@ import com.periodic.backend.domain.request.element.CreateElementRequest;
 import com.periodic.backend.domain.request.element.UpdateElementRequest;
 import com.periodic.backend.domain.response.element.CreateElementResponse;
 import com.periodic.backend.domain.response.element.GetElementResponse;
+import com.periodic.backend.domain.response.element.ToggleActiveElementResponse;
 import com.periodic.backend.domain.response.element.UpdateElementResponse;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.exception.AppException;
@@ -98,14 +99,30 @@ public class ElementService {
 			throw new AppException(ErrorCode.ELEMENT_ALREADY_EXISTS);
 		}
 		
-		Element newElement = elementMapper.updateElementRequestToElement(updateElementRequest);
-		newElement.setId(id);
+		Element requestElement = elementMapper.updateElementRequestToElement(updateElementRequest);
+		requestElement.setId(id);
 		
-		Element updatedElement = elementRepository.save(newElement);
+		Element updatedElement = elementRepository.save(requestElement);
 		
 		UpdateElementResponse response = elementMapper.elementToUpdateElementResponse(updatedElement);
 		log.info("End: Update element by id {} success", id);
 		return response;
 	}
 	
+	public ToggleActiveElementResponse toggleActive(Long id) {
+		log.info("Start: Function toggle active for element id {}", id);
+		Element element = elementRepository.findById(id)
+				.orElseThrow(() -> new AppException(ErrorCode.ELEMENT_NOT_FOUND));
+		boolean active = !element.isActive();
+		element.setActive(active);
+		Element updatedElement = elementRepository.save(element);
+		log.info("Update element active into database success");
+		ToggleActiveElementResponse response = elementMapper.elementToToggleActiveElementResponse(updatedElement);
+		return response;
+	}
+	
+	public Element getElementById(Long id) {
+		return elementRepository.findById(id)
+				.orElseThrow(() -> new AppException(ErrorCode.ELEMENT_NOT_FOUND));
+	}
 }
