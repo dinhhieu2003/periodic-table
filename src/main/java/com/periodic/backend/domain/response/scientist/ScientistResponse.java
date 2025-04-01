@@ -17,4 +17,5 @@ public class ScientistResponse {
 	private String nationality;
 	private String contribution;
 	private String fact;
+	private boolean active;
 }

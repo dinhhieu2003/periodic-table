@@ -16,4 +16,5 @@ public class PodcastResponse {
 	private String transcript;
 	// element name
 	private String element;
+	private boolean active;
 }

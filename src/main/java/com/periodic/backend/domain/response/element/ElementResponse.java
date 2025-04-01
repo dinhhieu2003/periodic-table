@@ -38,4 +38,5 @@ public class ElementResponse {
 	private String bondingType;
 	private int yearDiscovered;
 	private List<Integer> oxidationStates;
+	private boolean active;
 }

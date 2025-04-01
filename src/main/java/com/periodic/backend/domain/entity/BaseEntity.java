@@ -29,7 +29,7 @@ public abstract class BaseEntity {
 
     @Column(nullable = false)
     private boolean isActive;
-
+    
     @PrePersist
     public void setCreatedAtBeforePersist() {
         this.createdAt = Instant.now();
