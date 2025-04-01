@@ -14,7 +14,9 @@ import com.periodic.backend.domain.request.user.ChangePasswordRequest;
 import com.periodic.backend.domain.request.user.UpdateUserRoleRequest;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.domain.response.user.ChangePasswordResponse;
+import com.periodic.backend.domain.response.user.GetUserResponse;
 import com.periodic.backend.domain.response.user.ToggleActiveResponse;
+import com.periodic.backend.domain.response.user.UpdateUserResponse;
 import com.periodic.backend.domain.response.user.UpdateUserRoleResponse;
 import com.periodic.backend.exception.AppException;
 import com.periodic.backend.mapper.UserMapper;
@@ -42,26 +44,35 @@ public class UserService {
 		return userRepository.save(user);
 	}
 	
-	public PaginationResponse<List<User>> getUsers(Pageable pageable, String term) {
+	public UpdateUserResponse updateUser(User user) {
+		User updatedUser = userRepository.save(user);
+		UpdateUserResponse response = userMapper.userToUpdateUserResponse(updatedUser);
+		return response;
+	}
+	
+	public PaginationResponse<List<GetUserResponse>> getUsers(Pageable pageable, String term) {
 		log.info("Start: Function get users pageable");
-		Page<User> pageData = null;
+		Page<GetUserResponse> pageData = null;
+		Page<User> pageUser = null;
 		if(term.isEmpty()) {
 			log.info("Find all users in database");
-			pageData = userRepository.findAll(pageable);
+			pageUser = userRepository.findAll(pageable);
 		} else {
 			log.info("Find all users in database with name contain {}", term);
-			pageData = userRepository.findByNameContainingIgnoreCase(pageable, term);
+			pageUser = userRepository.findByNameContainingIgnoreCase(pageable, term);
 		}
-		PaginationResponse<List<User>> response = 
+		pageData = userMapper.pageUserToPageGetUserResponse(pageUser);
+		PaginationResponse<List<GetUserResponse>> response = 
 				PaginationUtils.buildPaginationResponse(pageable, pageData);
 		log.info("End: Function get users pageable successs");
 		return response;
 	}
 	
-	public User getUser(Long id) {
+	public GetUserResponse getUser(Long id) {
 		User user = userRepository.findById(id)
 				.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-		return user;
+		GetUserResponse response = userMapper.userToGetUserResponse(user);
+		return response;
 	}
 	
 	public User getUserByEmail(String email) {

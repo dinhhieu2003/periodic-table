@@ -23,7 +23,9 @@ import com.periodic.backend.domain.request.user.UpdateUserRequest;
 import com.periodic.backend.domain.request.user.UpdateUserRoleRequest;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.domain.response.user.ChangePasswordResponse;
+import com.periodic.backend.domain.response.user.GetUserResponse;
 import com.periodic.backend.domain.response.user.ToggleActiveResponse;
+import com.periodic.backend.domain.response.user.UpdateUserResponse;
 import com.periodic.backend.domain.response.user.UpdateUserRoleResponse;
 import com.periodic.backend.exception.AppException;
 import com.periodic.backend.security.SecurityUtils;
@@ -50,7 +52,7 @@ public class UserController {
 	
 	@Operation(summary = "Get users pageable")
 	@GetMapping("")
-	public ResponseEntity<PaginationResponse<List<User>>> getUsers(
+	public ResponseEntity<PaginationResponse<List<GetUserResponse>>> getUsers(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
 			@RequestParam(required = false, defaultValue = "") String term) {
@@ -60,19 +62,19 @@ public class UserController {
 	
 	@Operation(summary = "Get one user by user id")
 	@GetMapping("/{id}")
-	public ResponseEntity<User> getUser(@PathVariable Long id) {
+	public ResponseEntity<GetUserResponse> getUser(@PathVariable Long id) {
 		return ResponseEntity.ok(userService.getUser(id));
 	}
 	
 	@Operation(summary = "Update profile")
 	@PutMapping("")
-	public ResponseEntity<User> updateUser(@RequestBody UpdateUserRequest updateUser) {
+	public ResponseEntity<UpdateUserResponse> updateUser(@RequestBody UpdateUserRequest updateUser) {
 		String email = SecurityUtils.getCurrentUserLogin()
 				.orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 		User user = userService.getUserByEmail(email);
 		user.setName(updateUser.getName());
 		user.setAvatar(updateUser.getAvatar());
-		return ResponseEntity.ok(userService.saveUser(user));
+		return ResponseEntity.ok(userService.updateUser(user));
 	}
 	
 	@Operation(summary = "Update role for a user by user id")
