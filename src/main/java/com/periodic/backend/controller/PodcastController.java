@@ -77,7 +77,7 @@ public class PodcastController {
 	}
 	
 	// toggle active
-	@PatchMapping("/{id}")
+	@PatchMapping("/{id}/toggle-active")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<ToggleActivePodcastResponse> toggleActive(@PathVariable Long id) {
 		log.info("Admin is toggling active for podcast id {}", id);
