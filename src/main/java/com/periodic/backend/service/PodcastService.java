@@ -76,6 +76,8 @@ public class PodcastService {
 		Podcast existPodcast = podcastRepository.findById(id)
 				.orElseThrow(() -> new AppException(ErrorCode.PODCAST_NOT_FOUND));
 		Podcast requestPodcast = podcastMapper.updatePodcastRequestToPodcast(request);
+		Element element = elementService.getElementById(request.getElementId());
+		requestPodcast.setElement(element);
 		requestPodcast.setId(existPodcast.getId());
 		Podcast updatedPodcast = podcastRepository.save(requestPodcast);
 		log.info("Update new podcast into database success");
