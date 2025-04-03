@@ -48,6 +48,12 @@ public class User extends BaseEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Status status;
     
+	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+	private Set<CommentElement> commentElements = new HashSet<>();
+
+	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+	private Set<CommentPodcast> commentPodcast = new HashSet<>();
+
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<FavoriteElement> favoriteElements = new HashSet<>();
     

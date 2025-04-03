@@ -88,4 +88,9 @@ public class ScientistService {
 		ToggleActiveScientistResponse response = scientistMapper.scientistToToggleActiveResponse(updatedScientist);
 		return response;
 	}
+	
+	public Scientist getScientistById(Long id) {
+		return scientistRepository.findById(id)
+				.orElseThrow(() -> new AppException(ErrorCode.SCIENTIST_NOT_FOUND));
+	}
 } 

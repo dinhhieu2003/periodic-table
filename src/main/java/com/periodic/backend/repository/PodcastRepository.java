@@ -8,4 +8,5 @@ import com.periodic.backend.domain.entity.Podcast;
 
 public interface PodcastRepository extends JpaRepository<Podcast, Long> {
 	Page<Podcast> findByTitleContainingIgnoreCase(Pageable pageable, String title);
+	Page<Podcast> findByElementId(Pageable pageable, Long elementId);
 }

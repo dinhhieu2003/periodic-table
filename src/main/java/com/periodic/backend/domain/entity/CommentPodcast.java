@@ -25,4 +25,7 @@ public class CommentPodcast extends BaseEntity{
 	@ManyToOne
 	@JoinColumn(name = "podcast_id")
 	private Podcast podcast;
+	@ManyToOne
+	@JoinColumn(name = "user_id")
+	private User user;
 }

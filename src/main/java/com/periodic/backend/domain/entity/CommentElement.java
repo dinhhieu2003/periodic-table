@@ -25,4 +25,7 @@ public class CommentElement extends BaseEntity{
 	@ManyToOne
 	@JoinColumn(name = "element_id")
 	private Element element;
+	@ManyToOne
+	@JoinColumn(name = "user_id")
+	private User user;
 }

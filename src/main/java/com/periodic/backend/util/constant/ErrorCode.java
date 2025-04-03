@@ -29,7 +29,18 @@ public enum ErrorCode {
 	
 	// ====== PODCAST ======
 	PODCAST_ALREADY_EXISTS(4001, "Podcast is already exists", HttpStatus.BAD_REQUEST),
-	PODCAST_NOT_FOUND(4002, "Podcast not found", HttpStatus.NOT_FOUND);
+	PODCAST_NOT_FOUND(4002, "Podcast not found", HttpStatus.NOT_FOUND),
+	
+	// ====== DISCOVERY ======
+	DISCOVERY_ALREADY_EXISTS(5001, "Discovery relationship already exists", HttpStatus.BAD_REQUEST),
+	DISCOVERY_NOT_FOUND(5002, "Discovery not found", HttpStatus.NOT_FOUND),
+	
+	// ====== MILESTONE ======
+	MILESTONE_NOT_FOUND(6001, "Milestone not found", HttpStatus.NOT_FOUND),
+	
+	// ====== COMMENT ======
+	COMMENT_NOT_FOUND(7001, "Comment not found", HttpStatus.NOT_FOUND),
+	NOT_AUTHORIZED(7002, "Not authorized to perform this action", HttpStatus.FORBIDDEN);
 	
 	private final int code;
 	private final String message;

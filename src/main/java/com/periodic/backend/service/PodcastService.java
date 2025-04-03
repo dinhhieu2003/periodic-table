@@ -98,4 +98,15 @@ public class PodcastService {
 		log.info("End: Function toggle active for podcast id {} success", id);
 		return response;
 	}
+
+	public PaginationResponse<List<GetPodcastResponse>> getPodcastsByElementId(Pageable pageable, Long elementId) {
+	    log.info("Start: Function get podcasts by element ID {} pageable", elementId);
+	    Page<Podcast> pagePodcast = podcastRepository.findByElementId(pageable, elementId);
+	    Page<GetPodcastResponse> pageData = podcastMapper.pagePodcastToPageGetPodcastResponse(pagePodcast);
+	    PaginationResponse<List<GetPodcastResponse>> response = 
+	            PaginationUtils.buildPaginationResponse(pageable, pageData);
+	    
+	    log.info("End: Function get podcasts by element ID {} pageable success", elementId);
+	    return response;
+	}
 }

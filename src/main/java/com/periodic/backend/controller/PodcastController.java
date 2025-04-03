@@ -89,5 +89,16 @@ public class PodcastController {
 		log.info("Admin is toggling active for podcast id {}", id);
 		return ResponseEntity.ok(podcastService.toggleActive(id));
 	}
+
+	@Operation(summary = "Get podcasts by element ID pageable")
+	@GetMapping("/by-element/{elementId}")
+	public ResponseEntity<PaginationResponse<List<GetPodcastResponse>>> getPodcastsByElementId(
+	        @RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
+	        @RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
+	        @PathVariable Long elementId) {
+	    log.info("Getting podcasts for element ID {} pageable", elementId);
+	    Pageable pageable = PaginationUtils.createPageable(current, pageSize);
+	    return ResponseEntity.ok(podcastService.getPodcastsByElementId(pageable, elementId));
+	}
 	
 }
