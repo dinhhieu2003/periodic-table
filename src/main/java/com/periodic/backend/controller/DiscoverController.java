@@ -50,17 +50,19 @@ public class DiscoverController {
         return ResponseEntity.ok(discoverService.createDiscover(request));
     }
     
-    @Operation(summary = "Get discoveries pageable")
-    @GetMapping("")
-    public ResponseEntity<PaginationResponse<List<GetDiscoverResponse>>> getDiscoveries(
-            @RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
-            @RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
-            @RequestParam(required = false, defaultValue = "") String term,
-            @RequestParam(required = false, defaultValue = "") String searchBy) {
-        log.info("User is getting discoveries pageable");
-        Pageable pageable = PaginationUtils.createPageable(current, pageSize);
-        return ResponseEntity.ok(discoverService.getDiscoveries(pageable, term, searchBy));
-    }
+    @Operation(summary = "Get discoveries with search, sort and active filter")
+	@GetMapping("")
+	public ResponseEntity<PaginationResponse<List<GetDiscoverResponse>>> getDiscoveries(
+			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
+			@RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
+			@RequestParam(required = false, defaultValue = "") String term,
+			@RequestParam(required = false) String[] sortBy,
+			@RequestParam(required = false) String[] sortDirection,
+			@RequestParam(required = false) Boolean active) {
+		log.info("Getting discoveries with search, sort and active filter");
+		Pageable pageable = PaginationUtils.createPageable(current, pageSize);
+		return ResponseEntity.ok(discoverService.getDiscoveries(pageable, term, sortBy, sortDirection, active));
+	}
     
     @Operation(summary = "Get one discovery by discovery id")
     @GetMapping("/{id}")

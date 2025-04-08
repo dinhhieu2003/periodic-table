@@ -21,6 +21,7 @@ import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.exception.AppException;
 import com.periodic.backend.mapper.DiscoverMapper;
 import com.periodic.backend.repository.DiscoverRepository;
+import com.periodic.backend.repository.specification.DiscoverSpecification;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.ErrorCode;
 
@@ -61,31 +62,21 @@ public class DiscoverService {
         return response;
     }
     
-    public PaginationResponse<List<GetDiscoverResponse>> getDiscoveries(Pageable pageable, String term, String searchBy) {
-        log.info("Start: Function get discoveries pageable");
-        Page<Discover> pageDiscover = null;
-        
-        if (term.isEmpty()) {
-            log.info("Find all discoveries in database");
-            pageDiscover = discoverRepository.findAll(pageable);
-        } else if ("scientist".equals(searchBy)) {
-            log.info("Find all discoveries in database with scientist name {}", term);
-            pageDiscover = discoverRepository.findByScientistNameContainingIgnoreCase(pageable, term);
-        } else if ("element".equals(searchBy)) {
-            log.info("Find all discoveries in database with element name {}", term);
-            pageDiscover = discoverRepository.findByElementNameContainingIgnoreCase(pageable, term);
-        } else {
-            log.info("Invalid searchBy parameter, finding all discoveries");
-            pageDiscover = discoverRepository.findAll(pageable);
-        }
-        
-        Page<GetDiscoverResponse> pageData = discoverMapper.pageDiscoverToPageGetDiscoverResponse(pageDiscover);
-        PaginationResponse<List<GetDiscoverResponse>> response =
-                PaginationUtils.buildPaginationResponse(pageable, pageData);
-        
-        log.info("End: Function get discoveries pageable success");
-        return response;
-    }
+    public PaginationResponse<List<GetDiscoverResponse>> getDiscoveries(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
+		log.info("Start: Get discoveries with search term: {}, sort by: {}, sort direction: {}, and active: {}", 
+				term, sortBy != null ? String.join(",", sortBy) : null, 
+				sortDirection != null ? String.join(",", sortDirection) : null, active);
+		
+		DiscoverSpecification specification = new DiscoverSpecification(term, sortBy, sortDirection, active);
+		Page<Discover> pageDiscovery = discoverRepository.findAll(specification, pageable);
+		
+		Page<GetDiscoverResponse> pageData = discoverMapper.pageDiscoverToPageGetDiscoverResponse(pageDiscovery);
+		PaginationResponse<List<GetDiscoverResponse>> response = 
+				PaginationUtils.buildPaginationResponse(pageable, pageData);
+		
+		log.info("End: Get discoveries success");
+		return response;
+	}
     
     public GetDiscoverResponse getDiscover(Long id) {
         log.info("Start: Get discovery by id {}", id);

@@ -147,7 +147,7 @@ public class DiscoverControllerTest {
     @Test
     @WithMockUser
     void getDiscoveries_shouldReturnPaginatedDiscoveries() throws Exception {
-        when(discoverService.getDiscoveries(any(Pageable.class), anyString(), anyString()))
+        when(discoverService.getDiscoveries(any(Pageable.class), anyString(), any(String[].class), any(String[].class), any(Boolean.class)))
                 .thenReturn(paginationResponse);
 
         mockMvc.perform(get("/api/v1/discoveries")

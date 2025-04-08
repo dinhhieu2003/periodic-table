@@ -19,8 +19,10 @@ import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.exception.AppException;
 import com.periodic.backend.mapper.ElementMapper;
 import com.periodic.backend.repository.ElementRepository;
+import com.periodic.backend.repository.specification.ElementSpecification;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.ErrorCode;
+import com.periodic.backend.util.constant.SortParam;
 
 import lombok.RequiredArgsConstructor;
 
@@ -51,20 +53,18 @@ public class ElementService {
 		return createElementResponse;
 	}
 	
-	public PaginationResponse<List<GetElementResponse>> getElements(Pageable pageable, String term) {
-		log.info("Start: Get elements start");
-		Page<GetElementResponse> pageData = null;
-		Page<Element> pageElement = null;
-		if(term.isEmpty()) {
-			log.info("Find all elements in database");
-			pageElement = elementRepository.findAll(pageable);	
-		} else {
-			log.info("Find elements with name contain term {}", term);
-			pageElement = elementRepository.findByNameContainingIgnoreCase(pageable, term);
-		}
-		pageData = elementMapper.pageElementToPageGetElementResponse(pageElement);
+	public PaginationResponse<List<GetElementResponse>> getElements(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
+		log.info("Start: Get elements with search term: {}, sort by: {}, sort direction: {}, and active: {}", 
+				term, sortBy != null ? String.join(",", sortBy) : null, 
+				sortDirection != null ? String.join(",", sortDirection) : null, active);
+		
+		ElementSpecification specification = new ElementSpecification(term, sortBy, sortDirection, active);
+		Page<Element> pageElement = elementRepository.findAll(specification, pageable);
+		
+		Page<GetElementResponse> pageData = elementMapper.pageElementToPageGetElementResponse(pageElement);
 		PaginationResponse<List<GetElementResponse>> response = 
 				PaginationUtils.buildPaginationResponse(pageable, pageData);
+		
 		log.info("End: Get elements success");
 		return response;
 	}

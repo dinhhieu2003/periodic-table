@@ -25,9 +25,7 @@ public class ElementRequest {
 	private String image;
 	@NotBlank(message = "Element name is required")
 	private String name;
-	@Min(value = 1, message = "Atomic number must be at least 1")
-    @Max(value = 118, message = "Atomic number cannot exceed 118")
-	private String atomicNumber;
+	private int atomicNumber;
 	@Min(value = 1, message = "Group must be at least 1")
     @Max(value = 18, message = "Group cannot exceed 18")
 	private	String groupNumber;

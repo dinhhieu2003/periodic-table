@@ -34,7 +34,7 @@ public class Element extends BaseEntity{
 	private String symbol;
 	private String image;
 	private String name;
-	private String atomicNumber;
+	private int atomicNumber;
 	private	String groupNumber;
 	private String period;
 	private String block;

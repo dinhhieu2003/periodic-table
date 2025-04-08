@@ -27,6 +27,7 @@ import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.service.ElementService;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.PaginationParam;
+import com.periodic.backend.util.constant.SortParam;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,15 +50,18 @@ public class ElementController {
 		return ResponseEntity.ok(elementService.createElement(createElementRequest));
 	}
 	
-	@Operation(summary = "Get elements pageable")
+	@Operation(summary = "Get elements with search, sort and active filter")
 	@GetMapping("")
 	public ResponseEntity<PaginationResponse<List<GetElementResponse>>> getElements(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
-			@RequestParam(required = false, defaultValue = "") String term) {
-		log.info("User getting elements");
+			@RequestParam(required = false, defaultValue = "") String term,
+			@RequestParam(required = false) String[] sortBy,
+			@RequestParam(required = false) String[] sortDirection,
+			@RequestParam(required = false) Boolean active) {
+		log.info("Getting elements with search, sort and active filter");
 		Pageable pageable = PaginationUtils.createPageable(current, pageSize);
-		return ResponseEntity.ok(elementService.getElements(pageable, term));
+		return ResponseEntity.ok(elementService.getElements(pageable, term, sortBy, sortDirection, active));
 	}
 	
 	@Operation(summary = "Get one element by id")

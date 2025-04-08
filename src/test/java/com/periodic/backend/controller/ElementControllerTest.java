@@ -7,13 +7,13 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +33,7 @@ import com.periodic.backend.domain.response.pagination.Meta;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.service.ElementService;
 import com.periodic.backend.util.constant.StandardState;
+import com.periodic.backend.util.constant.SortParam;
 
 @WebMvcTest(ElementController.class)
 public class ElementControllerTest {
@@ -54,7 +55,7 @@ public class ElementControllerTest {
     	createElementRequest = CreateElementRequest.builder()
     		    .symbol("H")
     		    .name("Hydrogen")
-    		    .atomicNumber("1")
+    		    .atomicNumber(1)
     		    .groupNumber("1")
     		    .period("1")
     		    .block("s")
@@ -80,7 +81,7 @@ public class ElementControllerTest {
     			.id(1L)
     			.symbol("H")
     		    .name("Hydrogen")
-    		    .atomicNumber("1")
+    		    .atomicNumber(1)
     		    .groupNumber("1")
     		    .period("1")
     		    .block("s")
@@ -107,7 +108,7 @@ public class ElementControllerTest {
         		.id(1L)
     			.symbol("H")
     		    .name("Hydrogen")
-    		    .atomicNumber("1")
+    		    .atomicNumber(1)
     		    .groupNumber("1")
     		    .period("1")
     		    .block("s")
@@ -143,7 +144,7 @@ public class ElementControllerTest {
         		.id(1L)
     			.symbol("H")
     		    .name("Hydrogen")
-    		    .atomicNumber("1")
+    		    .atomicNumber(1)
     		    .groupNumber("1")
     		    .period("1")
     		    .block("s")
@@ -191,13 +192,19 @@ public class ElementControllerTest {
     
     @Test
     @WithMockUser
-    void getElements_shouldReturnPagedElements() throws Exception {
-        when(elementService.getElements(any(Pageable.class), anyString())).thenReturn(paginationResponse);
+    void getElements_withSearchAndSort_shouldReturnPagedElements() throws Exception {
+        when(elementService.getElements(any(Pageable.class), anyString(), any(String[].class), any(String[].class), any(Boolean.class)))
+                .thenReturn(paginationResponse);
 
-        mockMvc.perform(get("/api/v1/elements")
+        mockMvc.perform(get("/api/v1/elements").with(csrf())
                 .param("current", "1")
-                .param("pageSize", "10"))
-        
+                .param("pageSize", "10")
+                .param("term", "Hydrogen")
+                .param("sortBy", "name")
+                .param("sortBy", "atomicNumber")
+                .param("sortDirection", "asc")
+                .param("sortDirection", "desc")
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.result[0].name").value("Hydrogen"))
                 .andExpect(jsonPath("$.data.meta.current").value(1))
@@ -205,18 +212,36 @@ public class ElementControllerTest {
                 .andExpect(jsonPath("$.data.meta.totalItems").value(1));
     }
     
+    
     @Test
     @WithMockUser
-    void getElements_withSearchTerm_shouldReturnFilteredElements() throws Exception {
-        when(elementService.getElements(any(Pageable.class), anyString())).thenReturn(paginationResponse);
+    void getElements_withDefaultSort_shouldReturnSortedElements() throws Exception {
+        when(elementService.getElements(any(Pageable.class), anyString(), any(String[].class), any(String[].class), any(Boolean.class)))
+                .thenReturn(paginationResponse);
 
-        mockMvc.perform(get("/api/v1/elements")
+        mockMvc.perform(get("/api/v1/elements").with(csrf())
+        		.contentType(MediaType.APPLICATION_JSON)
+                .param("current", "1")
+                .param("pageSize", "10"))
+		        .andExpect(status().isOk())
+		        .andExpect(jsonPath("$.data.result[0].name").value("Hydrogen"))
+		        .andExpect(jsonPath("$.data.meta.current").value(1))
+		        .andExpect(jsonPath("$.data.meta.totalPages").value(1))
+		        .andExpect(jsonPath("$.data.meta.totalItems").value(1));
+    }
+    
+    @Test
+    @WithMockUser
+    void getElements_withInvalidSortDirection_shouldUseDefault() throws Exception {
+        when(elementService.getElements(any(Pageable.class), anyString(), any(String[].class), any(String[].class), any(Boolean.class)))
+                .thenReturn(paginationResponse);
+
+        mockMvc.perform(get("/api/v1/elements").with(csrf())
+        		.contentType(MediaType.APPLICATION_JSON)
                 .param("current", "1")
                 .param("pageSize", "10")
-                .param("term", "Hyd"))
-        
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.result[0].name").value("Hydrogen"));
+                .param("sortDirection", "invalid"))
+                .andExpect(status().isOk());
     }
     
     @Test
@@ -224,7 +249,7 @@ public class ElementControllerTest {
     void getElement_shouldReturnElement() throws Exception {
     	when(elementService.getElement(1L)).thenReturn(getElementResponse);
     	
-    	mockMvc.perform(get("/api/v1/elements/{id}", 1L)
+    	mockMvc.perform(get("/api/v1/elements/{id}", 1L).with(csrf())
     		.contentType(MediaType.APPLICATION_JSON))
     	
     		.andExpect(status().isOk())

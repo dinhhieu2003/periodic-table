@@ -20,6 +20,7 @@ import com.periodic.backend.domain.response.podcast.UpdatePodcastResponse;
 import com.periodic.backend.exception.AppException;
 import com.periodic.backend.mapper.PodcastMapper;
 import com.periodic.backend.repository.PodcastRepository;
+import com.periodic.backend.repository.specification.PodcastSpecification;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.ErrorCode;
 
@@ -45,20 +46,19 @@ public class PodcastService {
 		return response;
 	}
 	
-	public PaginationResponse<List<GetPodcastResponse>> getPodcasts(Pageable pageable, String term) {
-		log.info("Start: Function get all podcasts pageable");
-		Page<Podcast> pagePodcast = null;
-		Page<GetPodcastResponse> pageData = null;
-		if(term.isEmpty()) {
-			log.info("Find all podcasts in database");
-			pagePodcast = podcastRepository.findAll(pageable);
-		} else {
-			log.info("Find all podcasts in database with title {}", term);
-			pagePodcast = podcastRepository.findByTitleContainingIgnoreCase(pageable, term);
-		}
-		pageData = podcastMapper.pagePodcastToPageGetPodcastResponse(pagePodcast);
+	public PaginationResponse<List<GetPodcastResponse>> getPodcasts(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
+		log.info("Start: Get podcasts with search term: {}, sort by: {}, sort direction: {}, and active: {}", 
+				term, sortBy != null ? String.join(",", sortBy) : null, 
+				sortDirection != null ? String.join(",", sortDirection) : null, active);
+		
+		PodcastSpecification specification = new PodcastSpecification(term, sortBy, sortDirection, active);
+		Page<Podcast> pagePodcast = podcastRepository.findAll(specification, pageable);
+		
+		Page<GetPodcastResponse> pageData = podcastMapper.pagePodcastToPageGetPodcastResponse(pagePodcast);
 		PaginationResponse<List<GetPodcastResponse>> response = 
 				PaginationUtils.buildPaginationResponse(pageable, pageData);
+		
+		log.info("End: Get podcasts success");
 		return response;
 	}
 	

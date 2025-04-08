@@ -19,6 +19,7 @@ import com.periodic.backend.domain.response.scientist.UpdateScientistResponse;
 import com.periodic.backend.exception.AppException;
 import com.periodic.backend.mapper.ScientistMapper;
 import com.periodic.backend.repository.ScientistRepository;
+import com.periodic.backend.repository.specification.ScientistSpecification;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.ErrorCode;
 
@@ -40,21 +41,19 @@ public class ScientistService {
 		return createScientistResponse;
 	}
 	
-	public PaginationResponse<List<GetScientistResponse>> getScientists(Pageable pageable, String term) {
-		log.info("Start: Function get scientists pageable");
-		Page<Scientist> pageScientist = null;
-		Page<GetScientistResponse> pageData = null;
-		if(term.isEmpty()) {
-			log.info("Find all scientists in database");
-			pageScientist = scientistRepository.findAll(pageable);
-		} else {
-			log.info("Find all scientist in database with name {}", term);
-			pageScientist = scientistRepository.findByNameContainingIgnoreCase(pageable, term);
-		}
-		pageData = scientistMapper.pageScientistToPageGetScientistResponse(pageScientist);
+	public PaginationResponse<List<GetScientistResponse>> getScientists(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
+		log.info("Start: Get scientists with search term: {}, sort by: {}, sort direction: {}, and active: {}", 
+				term, sortBy != null ? String.join(",", sortBy) : null, 
+				sortDirection != null ? String.join(",", sortDirection) : null, active);
+		
+		ScientistSpecification specification = new ScientistSpecification(term, sortBy, sortDirection, active);
+		Page<Scientist> pageScientist = scientistRepository.findAll(specification, pageable);
+		
+		Page<GetScientistResponse> pageData = scientistMapper.pageScientistToPageGetScientistResponse(pageScientist);
 		PaginationResponse<List<GetScientistResponse>> response = 
 				PaginationUtils.buildPaginationResponse(pageable, pageData);
-		log.info("End: Function get scientist pageable success");
+		
+		log.info("End: Get scientists success");
 		return response;
 	}
 	

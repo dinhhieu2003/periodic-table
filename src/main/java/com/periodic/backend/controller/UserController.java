@@ -50,14 +50,19 @@ public class UserController {
 		return ResponseEntity.ok(userService.changePassword(changePasswordRequest));
 	}
 	
-	@Operation(summary = "Get users pageable")
+	@Operation(summary = "Get users with search, sort and active filter")
 	@GetMapping("")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<PaginationResponse<List<GetUserResponse>>> getUsers(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
-			@RequestParam(required = false, defaultValue = "") String term) {
+			@RequestParam(required = false, defaultValue = "") String term,
+			@RequestParam(required = false) String[] sortBy,
+			@RequestParam(required = false) String[] sortDirection,
+			@RequestParam(required = false) Boolean active) {
+		log.info("Getting users with search, sort and active filter");
 		Pageable pageable = PaginationUtils.createPageable(current, pageSize);
-		return ResponseEntity.ok(userService.getUsers(pageable, term));
+		return ResponseEntity.ok(userService.getUsers(pageable, term, sortBy, sortDirection, active));
 	}
 	
 	@Operation(summary = "Get one user by user id")

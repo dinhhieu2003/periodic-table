@@ -50,14 +50,18 @@ public class ScientistController {
 	}
 	
 	// get all
+	@Operation(summary = "Get scientists with search, sort and active filter")
 	@GetMapping("")
 	public ResponseEntity<PaginationResponse<List<GetScientistResponse>>> getScientists(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
-			@RequestParam(required = false, defaultValue = "") String term) {
-		log.info("User is getting scientist pageable");
+			@RequestParam(required = false, defaultValue = "") String term,
+			@RequestParam(required = false) String[] sortBy,
+			@RequestParam(required = false) String[] sortDirection,
+			@RequestParam(required = false) Boolean active) {
+		log.info("Getting scientists with search, sort and active filter");
 		Pageable pageable = PaginationUtils.createPageable(current, pageSize);
-		return ResponseEntity.ok(scientistService.getScientists(pageable, term));
+		return ResponseEntity.ok(scientistService.getScientists(pageable, term, sortBy, sortDirection, active));
 	}
 	
 	// get one

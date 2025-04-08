@@ -51,15 +51,18 @@ public class PodcastController {
 	}
 	
 	// get all
-	@Operation(summary = "Get podcasts pageable")
+	@Operation(summary = "Get podcasts with search, sort and active filter")
 	@GetMapping("")
 	public ResponseEntity<PaginationResponse<List<GetPodcastResponse>>> getPodcasts(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
-			@RequestParam(required = false, defaultValue = "") String term) {
-		log.info("User is getting all podcast pageable");
+			@RequestParam(required = false, defaultValue = "") String term,
+			@RequestParam(required = false) String[] sortBy,
+			@RequestParam(required = false) String[] sortDirection,
+			@RequestParam(required = false) Boolean active) {
+		log.info("Getting podcasts with search, sort and active filter");
 		Pageable pageable = PaginationUtils.createPageable(current, pageSize);
-		return ResponseEntity.ok(podcastService.getPodcasts(pageable, term));
+		return ResponseEntity.ok(podcastService.getPodcasts(pageable, term, sortBy, sortDirection, active));
 	}
 	
 	// get one

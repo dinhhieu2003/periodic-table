@@ -21,6 +21,7 @@ import com.periodic.backend.domain.response.user.UpdateUserRoleResponse;
 import com.periodic.backend.exception.AppException;
 import com.periodic.backend.mapper.UserMapper;
 import com.periodic.backend.repository.UserRepository;
+import com.periodic.backend.repository.specification.UserSpecification;
 import com.periodic.backend.security.SecurityUtils;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.ErrorCode;
@@ -50,21 +51,19 @@ public class UserService {
 		return response;
 	}
 	
-	public PaginationResponse<List<GetUserResponse>> getUsers(Pageable pageable, String term) {
-		log.info("Start: Function get users pageable");
-		Page<GetUserResponse> pageData = null;
-		Page<User> pageUser = null;
-		if(term.isEmpty()) {
-			log.info("Find all users in database");
-			pageUser = userRepository.findAll(pageable);
-		} else {
-			log.info("Find all users in database with name contain {}", term);
-			pageUser = userRepository.findByNameContainingIgnoreCase(pageable, term);
-		}
-		pageData = userMapper.pageUserToPageGetUserResponse(pageUser);
+	public PaginationResponse<List<GetUserResponse>> getUsers(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
+		log.info("Start: Get users with search term: {}, sort by: {}, sort direction: {}, and active: {}", 
+				term, sortBy != null ? String.join(",", sortBy) : null, 
+				sortDirection != null ? String.join(",", sortDirection) : null, active);
+		
+		UserSpecification specification = new UserSpecification(term, sortBy, sortDirection, active);
+		Page<User> pageUser = userRepository.findAll(specification, pageable);
+		
+		Page<GetUserResponse> pageData = userMapper.pageUserToPageGetUserResponse(pageUser);
 		PaginationResponse<List<GetUserResponse>> response = 
 				PaginationUtils.buildPaginationResponse(pageable, pageData);
-		log.info("End: Function get users pageable successs");
+		
+		log.info("End: Get users success");
 		return response;
 	}
 	
