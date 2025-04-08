@@ -6,6 +6,7 @@ import org.springframework.util.StringUtils;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
@@ -50,25 +51,42 @@ public abstract class BaseSpecification<T> implements Specification<T> {
     
     protected List<Order> createOrders(Root<T> root, CriteriaBuilder criteriaBuilder) {
         List<Order> orders = new ArrayList<>();
-        
+
         for (int i = 0; i < sortBy.length; i++) {
             String field = sortBy[i];
             String direction = (sortDirection != null && i < sortDirection.length) ? sortDirection[i] : "asc";
-            
-            String[] path = field.split("\\.");
-            jakarta.persistence.criteria.Path<Object> propertyPath = root.get(path[0]);
-            
-            for (int j = 1; j < path.length; j++) {
-                propertyPath = propertyPath.get(path[j]);
-            }
-            
-            if ("desc".equalsIgnoreCase(direction)) {
-                orders.add(criteriaBuilder.desc(propertyPath));
+
+            Path<?> propertyPath = buildPropertyPath(root, field);
+
+            Order order;
+
+            if (Number.class.isAssignableFrom(propertyPath.getJavaType())) {
+                @SuppressWarnings("unchecked")
+                Path<Number> numberPath = (Path<Number>) propertyPath;
+
+                // Dùng toInteger để sort đúng kiểu số
+                order = "desc".equalsIgnoreCase(direction)
+                        ? criteriaBuilder.desc(criteriaBuilder.toInteger(numberPath))
+                        : criteriaBuilder.asc(criteriaBuilder.toInteger(numberPath));
             } else {
-                orders.add(criteriaBuilder.asc(propertyPath));
+                order = "desc".equalsIgnoreCase(direction)
+                        ? criteriaBuilder.desc(propertyPath)
+                        : criteriaBuilder.asc(propertyPath);
             }
+
+            orders.add(order);
         }
-        
+
         return orders;
     }
+
+    private Path<?> buildPropertyPath(Root<T> root, String field) {
+        String[] parts = field.split("\\.");
+        Path<?> path = root.get(parts[0]);
+        for (int j = 1; j < parts.length; j++) {
+            path = path.get(parts[j]);
+        }
+        return path;
+    }
+
 } 
