@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import com.periodic.backend.domain.entity.User;
 import com.periodic.backend.domain.response.user.GetUserResponse;
+import com.periodic.backend.domain.response.user.ProfileResponse;
 import com.periodic.backend.domain.response.user.ToggleActiveResponse;
 import com.periodic.backend.domain.response.user.UpdateUserResponse;
 import com.periodic.backend.domain.response.user.UpdateUserRoleResponse;
@@ -35,4 +36,21 @@ public interface UserMapper {
 				.collect(Collectors.toList());
 		return new PageImpl<>(content, pageUser.getPageable(), pageUser.getTotalElements());
 	}
+	
+	default ProfileResponse userToProfileResponse(User user) {
+	    if (user == null) return null;
+	    return ProfileResponse.builder()
+	        .id(user.getId())
+	        .email(user.getEmail())
+	        .name(user.getName())
+	        .avatar(user.getAvatar())
+	        .role(user.getRole())
+	        .active(user.isActive())
+	        .favoriteElements(user.getFavoriteElements())
+	        .viewedElements(user.getViewedElements())
+	        .favoritePodcasts(user.getFavoritePodcasts())
+	        .viewedPodcasts(user.getViewedPodcasts())
+	        .build();
+	}
+
 }

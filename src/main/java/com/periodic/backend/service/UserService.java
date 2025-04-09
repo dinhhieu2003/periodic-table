@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.periodic.backend.domain.entity.User;
@@ -15,6 +16,7 @@ import com.periodic.backend.domain.request.user.UpdateUserRoleRequest;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.domain.response.user.ChangePasswordResponse;
 import com.periodic.backend.domain.response.user.GetUserResponse;
+import com.periodic.backend.domain.response.user.ProfileResponse;
 import com.periodic.backend.domain.response.user.ToggleActiveResponse;
 import com.periodic.backend.domain.response.user.UpdateUserResponse;
 import com.periodic.backend.domain.response.user.UpdateUserRoleResponse;
@@ -123,5 +125,15 @@ public class UserService {
 		log.info("Update user active into database success");
 		ToggleActiveResponse response = userMapper.userToToggleActiveResponse(updatedUser);
 		return response;
+	}
+	
+	public ProfileResponse getProfile() {
+		log.info("Start: Function get profile");
+		var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = getUserByEmail(username);
+        ProfileResponse response = userMapper.userToProfileResponse(user);
+        log.info("End: Function get profile success");
+        return response;
 	}
 }

@@ -40,7 +40,10 @@ public enum ErrorCode {
 	
 	// ====== COMMENT ======
 	COMMENT_NOT_FOUND(7001, "Comment not found", HttpStatus.NOT_FOUND),
-	NOT_AUTHORIZED(7002, "Not authorized to perform this action", HttpStatus.FORBIDDEN);
+	NOT_AUTHORIZED(7002, "Not authorized to perform this action", HttpStatus.FORBIDDEN),
+	
+	// ====== FAVORITE_ELEMENT ======
+	FAVORITE_ELEMENT_NOT_FOUND(8001, "Favorite element not found", HttpStatus.NOT_FOUND);
 	
 	private final int code;
 	private final String message;

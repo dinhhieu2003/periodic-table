@@ -1,5 +1,6 @@
 package com.periodic.backend.domain.entity;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -49,22 +50,22 @@ public class User extends BaseEntity implements UserDetails {
     private Status status;
     
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-	private Set<CommentElement> commentElements = new HashSet<>();
+	private List<CommentElement> commentElements = new ArrayList<>();
 
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-	private Set<CommentPodcast> commentPodcast = new HashSet<>();
+	private List<CommentPodcast> commentPodcast = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private Set<FavoriteElement> favoriteElements = new HashSet<>();
+    private List<FavoriteElement> favoriteElements = new ArrayList<>();
     
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private Set<LearnedElement> learnedElements = new HashSet<>();
+    private List<ViewedElement> viewedElements = new ArrayList<>();
     
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private Set<FavoritePodcast> favoritePodcasts = new HashSet<>();
+    private List<FavoritePodcast> favoritePodcasts = new ArrayList<>();
     
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private Set<LearnedPodcast> learnedPodcasts = new HashSet<>();
+    private List<ViewedPodcast> viewedPodcasts = new ArrayList<>();
     
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

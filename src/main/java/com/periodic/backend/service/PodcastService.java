@@ -109,4 +109,9 @@ public class PodcastService {
 	    log.info("End: Function get podcasts by element ID {} pageable success", elementId);
 	    return response;
 	}
+	
+	public Podcast getPodcastById(Long id) {
+		return podcastRepository.findById(id)
+				.orElseThrow(() -> new AppException(ErrorCode.PODCAST_NOT_FOUND));
+	}
 }

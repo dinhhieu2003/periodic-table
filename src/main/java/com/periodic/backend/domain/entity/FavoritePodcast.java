@@ -1,5 +1,9 @@
 package com.periodic.backend.domain.entity;
 
+import java.time.Instant;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -18,9 +22,12 @@ import lombok.NoArgsConstructor;
 public class FavoritePodcast extends BaseEntity {
 	@ManyToOne
 	@JoinColumn(name = "user_id")
+	@JsonIgnore
 	private User user;
 	
 	@ManyToOne
 	@JoinColumn(name = "podcast_id")
 	private Podcast podcast;
+	
+	private Instant lastSeen;
 }

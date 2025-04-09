@@ -24,6 +24,7 @@ import com.periodic.backend.domain.request.user.UpdateUserRoleRequest;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.domain.response.user.ChangePasswordResponse;
 import com.periodic.backend.domain.response.user.GetUserResponse;
+import com.periodic.backend.domain.response.user.ProfileResponse;
 import com.periodic.backend.domain.response.user.ToggleActiveResponse;
 import com.periodic.backend.domain.response.user.UpdateUserResponse;
 import com.periodic.backend.domain.response.user.UpdateUserRoleResponse;
@@ -80,6 +81,13 @@ public class UserController {
 		user.setName(updateUser.getName());
 		user.setAvatar(updateUser.getAvatar());
 		return ResponseEntity.ok(userService.updateUser(user));
+	}
+	
+	@Operation(summary = "Get profile")
+	@GetMapping("/profile")
+	public ResponseEntity<ProfileResponse> getProfile() {
+		log.info("Getting profile");
+		return ResponseEntity.ok(userService.getProfile());
 	}
 	
 	@Operation(summary = "Update role for a user by user id")

@@ -1,7 +1,11 @@
 package com.periodic.backend.domain.entity;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,14 +34,18 @@ public class Podcast extends BaseEntity{
 	
 	@ManyToOne
 	@JoinColumn(name = "element_id")
+	@JsonIgnore
 	private Element element;
 	
 	@OneToMany(mappedBy = "podcast")
-	private Set<CommentPodcast> comments = new HashSet<>();
+	@JsonIgnore
+	private List<CommentPodcast> comments = new ArrayList<>();
 	
 	@OneToMany(mappedBy =  "podcast")
-	private Set<FavoritePodcast> podcasts = new HashSet<>();
+	@JsonIgnore
+	private List<FavoritePodcast> podcasts = new ArrayList<>();
 	
 	@OneToMany(mappedBy = "podcast")
-	private Set<LearnedPodcast> learnedPodcasts = new HashSet<>();
+	@JsonIgnore
+	private List<ViewedPodcast> viewedPodcasts = new ArrayList<>();
 }

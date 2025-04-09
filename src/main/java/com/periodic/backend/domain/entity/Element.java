@@ -8,6 +8,7 @@ import java.util.Set;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.periodic.backend.util.constant.StandardState;
 
 import jakarta.persistence.Column;
@@ -59,18 +60,23 @@ public class Element extends BaseEntity{
 	private List<Integer> oxidationStates = new ArrayList<>();
 	
 	@OneToMany(mappedBy = "element")
-	private Set<Discover> discoveries = new HashSet<>();
+	@JsonIgnore
+	private List<Discover> discoveries = new ArrayList<>();
 
     @OneToMany(mappedBy = "element", fetch = FetchType.LAZY)
-    private Set<FavoriteElement> favorites = new HashSet<>();
+    @JsonIgnore
+    private List<FavoriteElement> favorites = new ArrayList<>();
     
     @OneToMany(mappedBy = "element", fetch = FetchType.LAZY)
-    private Set<LearnedElement> learnedElements = new HashSet<>();
+    @JsonIgnore
+    private List<ViewedElement> viewedElements = new ArrayList<>();
     
     @OneToMany(mappedBy = "element", fetch = FetchType.LAZY)
-    private Set<Podcast> podcasts = new HashSet<>();
+    @JsonIgnore
+    private List<Podcast> podcasts = new ArrayList<>();
     
     @OneToMany(mappedBy = "element", fetch = FetchType.LAZY)
-    private Set<CommentElement> comments = new HashSet<>();
+    @JsonIgnore
+    private List<CommentElement> comments = new ArrayList<>();
     
 }

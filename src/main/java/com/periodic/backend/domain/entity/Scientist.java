@@ -1,6 +1,8 @@
 package com.periodic.backend.domain.entity;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import jakarta.persistence.Column;
@@ -30,7 +32,7 @@ public class Scientist extends BaseEntity {
 	@Column(columnDefinition = "TEXT")
 	private String fact;
 	@OneToMany(mappedBy = "scientist")
-	private Set<Discover> discoveries = new HashSet<>();
+	private List<Discover> discoveries = new ArrayList<>();
 	@OneToMany(mappedBy = "scientist")
-	private Set<Milestone> milestones = new HashSet<>();
+	private List<Milestone> milestones = new ArrayList<>();
 }
