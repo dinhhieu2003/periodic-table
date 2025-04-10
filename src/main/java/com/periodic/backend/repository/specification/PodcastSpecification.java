@@ -25,7 +25,6 @@ public class PodcastSpecification extends BaseSpecification<Podcast> {
         
         return criteriaBuilder.or(
             criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), searchPattern),
-            criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), searchPattern),
             criteriaBuilder.like(criteriaBuilder.lower(root.get("element").get("name")), searchPattern),
             criteriaBuilder.like(criteriaBuilder.lower(root.get("element").get("symbol")), searchPattern)
         );
