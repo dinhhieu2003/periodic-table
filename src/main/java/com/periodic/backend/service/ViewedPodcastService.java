@@ -2,6 +2,7 @@ package com.periodic.backend.service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,11 +37,15 @@ public class ViewedPodcastService {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         User user = userService.getUserByEmail(username);
+        Optional<ViewedPodcast> existViewedPodcast = viewedPodcastRepository.findByUser_IdAndPodcast_Id(user.getId(), podcastId);
         ViewedPodcast viewedPodcast = new ViewedPodcast();
         viewedPodcast.setPodcast(podcast);
         viewedPodcast.setUser(user);
         viewedPodcast.setActive(true);
         viewedPodcast.setLastSeen(Instant.now());
+        if(existViewedPodcast.isPresent()) {
+        	viewedPodcast.setId(existViewedPodcast.get().getId());
+        }
         ViewedPodcast updatedViewedPodcast = viewedPodcastRepository.save(viewedPodcast);
         ViewedPodcastResponse viewedPodcastResponse = viewedPodcastMapper.viewedPodcastToViewedPodcastResponse(updatedViewedPodcast);
         log.info("End: function create/update viewed podcast success");

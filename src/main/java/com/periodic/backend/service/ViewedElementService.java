@@ -2,6 +2,7 @@ package com.periodic.backend.service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,11 +37,16 @@ public class ViewedElementService {
 		var authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         User user = userService.getUserByEmail(username);
+        Long userId = user.getId();
+        Optional<ViewedElement> existViewedElement = viewedElementRepository.findByUser_IdAndElement_Id(userId, elementId);
         ViewedElement viewedElement = new ViewedElement();
-        viewedElement.setElement(element);
+    	viewedElement.setElement(element);
         viewedElement.setUser(user);
         viewedElement.setActive(true);
         viewedElement.setLastSeen(Instant.now());
+        if(existViewedElement.isPresent()) {
+        	viewedElement.setId(existViewedElement.get().getId());
+        }
         ViewedElement updatedViewedElement = viewedElementRepository.save(viewedElement);
         ViewedElementResponse viewedElementResponse = viewedElementMapper.viewedElementToViewedElementResponse(updatedViewedElement);
         log.info("End: function create/update viewed element success");
