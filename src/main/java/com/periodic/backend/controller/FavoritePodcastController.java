@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.periodic.backend.domain.response.favoritePodcast.CheckActiveFavoritePodcastResponse;
 import com.periodic.backend.domain.response.favoritePodcast.FavoritePodcastResponse;
+import com.periodic.backend.domain.response.favoritePodcast.ToggleActiveFavoritePodcastResponse;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.service.FavoritePodcastService;
 import com.periodic.backend.util.PaginationUtils;
@@ -43,8 +45,15 @@ public class FavoritePodcastController {
 	
 	@PostMapping("/podcasts/{id}")
 	@Operation(summary = "Toggle active an favorite podcast with element id - {id} is podcastId")
-	public ResponseEntity<FavoritePodcastResponse> toggleActive(@PathVariable Long id) {
+	public ResponseEntity<ToggleActiveFavoritePodcastResponse> toggleActive(@PathVariable Long id) {
 		log.info("Toggle love for podcast id {} of this user", id);
 		return ResponseEntity.ok(favoritePodcastService.toggleActive(id));
+	}
+	
+	@GetMapping("/podcasts/{id}")
+	@Operation(summary = "Check active a favorite podcast with podcast id - {id} is podcastId")
+	public ResponseEntity<CheckActiveFavoritePodcastResponse> checkActive(@PathVariable Long id) {
+		log.info("Check active for podcast id {} of this user", id);
+		return ResponseEntity.ok(favoritePodcastService.checkActive(id));
 	}
 }

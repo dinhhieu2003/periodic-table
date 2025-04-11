@@ -2,6 +2,7 @@ package com.periodic.backend.service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +12,9 @@ import org.springframework.stereotype.Service;
 import com.periodic.backend.domain.entity.FavoritePodcast;
 import com.periodic.backend.domain.entity.Podcast;
 import com.periodic.backend.domain.entity.User;
+import com.periodic.backend.domain.response.favoritePodcast.CheckActiveFavoritePodcastResponse;
 import com.periodic.backend.domain.response.favoritePodcast.FavoritePodcastResponse;
+import com.periodic.backend.domain.response.favoritePodcast.ToggleActiveFavoritePodcastResponse;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.mapper.FavoritePodcastMapper;
 import com.periodic.backend.repository.FavoritePodcastRepository;
@@ -30,7 +33,7 @@ public class FavoritePodcastService {
     private final PodcastService podcastService;
     private final FavoritePodcastMapper favoritePodcastMapper;
 
-    public FavoritePodcastResponse toggleActive(Long podcastId) {
+    public ToggleActiveFavoritePodcastResponse toggleActive(Long podcastId) {
         log.info("Start: Function toggle active favorite podcast");
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -43,7 +46,7 @@ public class FavoritePodcastService {
             FavoritePodcast newFavoritePodcast = new FavoritePodcast(user, podcast, Instant.now());
             newFavoritePodcast.setActive(true);
             favoritePodcastRepository.save(newFavoritePodcast);
-            FavoritePodcastResponse response = favoritePodcastMapper.favoritePodcastToFavoritePodcastResponse(newFavoritePodcast);
+            ToggleActiveFavoritePodcastResponse response = new ToggleActiveFavoritePodcastResponse(podcastId, true);
             log.info("End: Function toggle active success - create new favorite podcast");
             return response;
         }
@@ -52,7 +55,7 @@ public class FavoritePodcastService {
         boolean active = !favoritePodcast.isActive();
         favoritePodcast.setActive(active);
         FavoritePodcast updatedFavoritePodcast = favoritePodcastRepository.save(favoritePodcast);
-        FavoritePodcastResponse response = favoritePodcastMapper.favoritePodcastToFavoritePodcastResponse(updatedFavoritePodcast);
+        ToggleActiveFavoritePodcastResponse response = new ToggleActiveFavoritePodcastResponse(podcastId, updatedFavoritePodcast.isActive());
         log.info("End: Function toggle active success");
         return response;
     }
@@ -74,6 +77,19 @@ public class FavoritePodcastService {
         PaginationResponse<List<FavoritePodcastResponse>> response = 
                 PaginationUtils.buildPaginationResponse(pageable, pageData);
         log.info("End: Function get favorite podcasts success");
+        return response;
+    }
+    
+    public CheckActiveFavoritePodcastResponse checkActive(Long podcastId) {
+    	var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userService.getUserByEmail(username);
+        Long userId = user.getId();
+        Optional<FavoritePodcast> existFavoritePodcast = favoritePodcastRepository.findByUser_IdAndPodcast_Id(userId, podcastId);
+        CheckActiveFavoritePodcastResponse response = new CheckActiveFavoritePodcastResponse(podcastId, false);
+        if(existFavoritePodcast.isPresent()) {
+        	response.setActive(existFavoritePodcast.get().isActive());
+        }
         return response;
     }
 } 

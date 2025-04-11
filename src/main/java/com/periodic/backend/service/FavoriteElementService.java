@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import com.periodic.backend.domain.entity.Element;
 import com.periodic.backend.domain.entity.FavoriteElement;
 import com.periodic.backend.domain.entity.User;
+import com.periodic.backend.domain.response.favoriteElement.CheckActiveFavoriteElementResponse;
 import com.periodic.backend.domain.response.favoriteElement.FavoriteElementResponse;
+import com.periodic.backend.domain.response.favoriteElement.ToggleActiveFavoriteElementResponse;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.mapper.FavoriteElementMapper;
 import com.periodic.backend.repository.FavoriteElementRepository;
@@ -31,7 +33,7 @@ public class FavoriteElementService {
 	private final ElementService elementService;
 	private final FavoriteElementMapper favoriteElementMapper;
 	
-	public FavoriteElementResponse toggleActive(Long elementId) {
+	public ToggleActiveFavoriteElementResponse toggleActive(Long elementId) {
 		log.info("Start: Function toggle active favorite element");
 		var authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -44,7 +46,7 @@ public class FavoriteElementService {
 			FavoriteElement newFavoriteElement = new FavoriteElement(user, element, Instant.now());
 			newFavoriteElement.setActive(true);
 			favoriteElementRepository.save(newFavoriteElement);
-			FavoriteElementResponse response = favoriteElementMapper.favoriteElementToFavoriteElementResponse(newFavoriteElement);
+			ToggleActiveFavoriteElementResponse response = new ToggleActiveFavoriteElementResponse(elementId, true);
 			log.info("End: Function toggle active success - create new favorite element");
 			return response;
 		}
@@ -53,7 +55,7 @@ public class FavoriteElementService {
 		favoriteElement.setActive(active);
 		favoriteElement.setLastSeen(Instant.now());
 		FavoriteElement updatedFavoriteElement = favoriteElementRepository.save(favoriteElement);
-		FavoriteElementResponse response = favoriteElementMapper.favoriteElementToFavoriteElementResponse(updatedFavoriteElement);
+		ToggleActiveFavoriteElementResponse response = new ToggleActiveFavoriteElementResponse(elementId, updatedFavoriteElement.isActive());
 		log.info("End: Function toggle active success");
 		return response;
 	}
@@ -75,6 +77,20 @@ public class FavoriteElementService {
 		PaginationResponse<List<FavoriteElementResponse>> response = 
 				PaginationUtils.buildPaginationResponse(pageable, pageData);
 		log.info("End: Function get favorite elements success");
+		return response;
+	}
+	
+	public CheckActiveFavoriteElementResponse checkActive(Long elementId) {
+		var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userService.getUserByEmail(username);
+        Long userId = user.getId();
+		Optional<FavoriteElement> existFavoriteElement = favoriteElementRepository.findByUser_IdAndElement_Id(userId, elementId);
+		CheckActiveFavoriteElementResponse response = new CheckActiveFavoriteElementResponse(elementId, false);
+		if(existFavoriteElement.isPresent()) {
+			response.setActive(existFavoriteElement.get().isActive());
+		}
+		
 		return response;
 	}
 }

@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.periodic.backend.domain.response.favoriteElement.CheckActiveFavoriteElementResponse;
 import com.periodic.backend.domain.response.favoriteElement.FavoriteElementResponse;
+import com.periodic.backend.domain.response.favoriteElement.ToggleActiveFavoriteElementResponse;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.service.FavoriteElementService;
 import com.periodic.backend.util.PaginationUtils;
@@ -43,8 +45,15 @@ public class FavoriteElementController {
 	
 	@PostMapping("/elements/{id}")
 	@Operation(summary = "Toggle active an favorite element with element id - {id} is elementId")
-	public ResponseEntity<FavoriteElementResponse> toggleActive(@PathVariable Long id) {
+	public ResponseEntity<ToggleActiveFavoriteElementResponse> toggleActive(@PathVariable Long id) {
 		log.info("Toggle love for element id {} of this user", id);
 		return ResponseEntity.ok(favoriteElementService.toggleActive(id));
+	}
+	
+	@GetMapping("/elements/{id}")
+	@Operation(summary = "Check active a favorite element with element id - {id} is elementId")
+	public ResponseEntity<CheckActiveFavoriteElementResponse> checkActive(@PathVariable Long id) {
+		log.info("Check element {} is loved", id);
+		return ResponseEntity.ok(favoriteElementService.checkActive(id));
 	}
 }
