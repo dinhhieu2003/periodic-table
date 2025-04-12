@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.periodic.backend.domain.response.favoritePodcast.CheckActiveFavoritePodcastResponse;
 import com.periodic.backend.domain.response.favoritePodcast.FavoritePodcastResponse;
+import com.periodic.backend.domain.response.favoritePodcast.FavoritePodcastShortResponse;
 import com.periodic.backend.domain.response.favoritePodcast.ToggleActiveFavoritePodcastResponse;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.service.FavoritePodcastService;
@@ -31,7 +32,7 @@ public class FavoritePodcastController {
 	private final FavoritePodcastService favoritePodcastService;
 	
 	@GetMapping("")
-	public ResponseEntity<PaginationResponse<List<FavoritePodcastResponse>>> getFavoritePodcasts(
+	public ResponseEntity<PaginationResponse<List<FavoritePodcastShortResponse>>> getFavoritePodcasts(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
 			@RequestParam(required = false, defaultValue = "") String term,

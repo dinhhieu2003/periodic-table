@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.domain.response.viewedElement.ViewedElementResponse;
+import com.periodic.backend.domain.response.viewedElement.ViewedElementShortResponse;
 import com.periodic.backend.service.ViewedElementService;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.PaginationParam;
@@ -40,7 +41,7 @@ public class ViewedElementController {
 	
 	@Operation(summary = "Get viewed elements with search, sort and active filter")
 	@GetMapping("")
-	public ResponseEntity<PaginationResponse<List<ViewedElementResponse>>> getViewedElements(
+	public ResponseEntity<PaginationResponse<List<ViewedElementShortResponse>>> getViewedElements(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
 			@RequestParam(required = false, defaultValue = "") String term,

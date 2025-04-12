@@ -128,12 +128,10 @@ public class UserService {
 	}
 	
 	public ProfileResponse getProfile() {
-		log.info("Start: Function get profile");
 		var authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         User user = getUserByEmail(username);
         ProfileResponse response = userMapper.userToProfileResponse(user);
-        log.info("End: Function get profile success");
         return response;
 	}
 }

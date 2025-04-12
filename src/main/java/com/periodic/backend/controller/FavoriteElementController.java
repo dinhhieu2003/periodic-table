@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.periodic.backend.domain.response.favoriteElement.CheckActiveFavoriteElementResponse;
 import com.periodic.backend.domain.response.favoriteElement.FavoriteElementResponse;
+import com.periodic.backend.domain.response.favoriteElement.FavoriteElementShortResponse;
 import com.periodic.backend.domain.response.favoriteElement.ToggleActiveFavoriteElementResponse;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.service.FavoriteElementService;
@@ -31,7 +32,7 @@ public class FavoriteElementController {
 	private final FavoriteElementService favoriteElementService;
 	
 	@GetMapping("")
-	public ResponseEntity<PaginationResponse<List<FavoriteElementResponse>>> getFavoriteElements(
+	public ResponseEntity<PaginationResponse<List<FavoriteElementShortResponse>>> getFavoriteElements(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
 			@RequestParam(required = false, defaultValue = "") String term,

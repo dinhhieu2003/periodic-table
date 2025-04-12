@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.domain.response.viewedPodcast.ViewedPodcastResponse;
+import com.periodic.backend.domain.response.viewedPodcast.ViewedPodcastShortResponse;
 import com.periodic.backend.service.ViewedPodcastService;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.PaginationParam;
@@ -39,7 +40,7 @@ public class ViewedPodcastController {
 	}
 
 	@GetMapping("")
-	public ResponseEntity<PaginationResponse<List<ViewedPodcastResponse>>> getViewedPodcasts(
+	public ResponseEntity<PaginationResponse<List<ViewedPodcastShortResponse>>> getViewedPodcasts(
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_CURRENT_PAGE) int current,
 			@RequestParam(defaultValue = PaginationParam.DEFAULT_PAGE_SIZE) int pageSize,
 			@RequestParam(required = false, defaultValue = "") String term,

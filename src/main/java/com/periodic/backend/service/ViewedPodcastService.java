@@ -14,6 +14,7 @@ import com.periodic.backend.domain.entity.User;
 import com.periodic.backend.domain.entity.ViewedPodcast;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.domain.response.viewedPodcast.ViewedPodcastResponse;
+import com.periodic.backend.domain.response.viewedPodcast.ViewedPodcastShortResponse;
 import com.periodic.backend.mapper.ViewedPodcastMapper;
 import com.periodic.backend.repository.ViewedPodcastRepository;
 import com.periodic.backend.repository.specification.ViewedPodcastSpecification;
@@ -52,7 +53,7 @@ public class ViewedPodcastService {
         return viewedPodcastResponse;
     }
 
-    public PaginationResponse<List<ViewedPodcastResponse>> getViewedPodcasts(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
+    public PaginationResponse<List<ViewedPodcastShortResponse>> getViewedPodcasts(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
         log.info("Start: Get viewed podcasts with search term: {}, sort by: {}, sort direction: {}, and active: {}", 
                 term, sortBy != null ? String.join(",", sortBy) : null, 
                 sortDirection != null ? String.join(",", sortDirection) : null, active);
@@ -65,10 +66,13 @@ public class ViewedPodcastService {
         if (sortBy == null) {
             sortBy = new String[]{"lastSeen"};
         }
+        if(active == null) {
+        	active = true;
+        }
         ViewedPodcastSpecification specification = new ViewedPodcastSpecification(term, sortBy, sortDirection, active);
         Page<ViewedPodcast> pageViewedPodcast = viewedPodcastRepository.findAll(specification, pageable);
-        Page<ViewedPodcastResponse> pageData = viewedPodcastMapper.pageViewedPodcastToPageViewedPodcastResponse(pageViewedPodcast);
-        PaginationResponse<List<ViewedPodcastResponse>> response = PaginationUtils.buildPaginationResponse(pageable, pageData);
+        Page<ViewedPodcastShortResponse> pageData = viewedPodcastMapper.pageViewedPodcastToPageViewedPodcastShortResponse(pageViewedPodcast);
+        PaginationResponse<List<ViewedPodcastShortResponse>> response = PaginationUtils.buildPaginationResponse(pageable, pageData);
         log.info("End: function get viewed podcasts of {}", user.getEmail());
         return response;
     }

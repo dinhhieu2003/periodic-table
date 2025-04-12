@@ -14,6 +14,7 @@ import com.periodic.backend.domain.entity.Podcast;
 import com.periodic.backend.domain.entity.User;
 import com.periodic.backend.domain.response.favoritePodcast.CheckActiveFavoritePodcastResponse;
 import com.periodic.backend.domain.response.favoritePodcast.FavoritePodcastResponse;
+import com.periodic.backend.domain.response.favoritePodcast.FavoritePodcastShortResponse;
 import com.periodic.backend.domain.response.favoritePodcast.ToggleActiveFavoritePodcastResponse;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.mapper.FavoritePodcastMapper;
@@ -59,8 +60,22 @@ public class FavoritePodcastService {
         log.info("End: Function toggle active success");
         return response;
     }
+    
+    public List<FavoritePodcastShortResponse> getFavoritePodcasts() {
+    	var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userService.getUserByEmail(username);
+        String[] sortBy = {"lastSeen"};
+        String term = user.getEmail();
+        String[] sortDirection = null;
+        Boolean active = true;
+        FavoritePodcastSpecification spec = new FavoritePodcastSpecification(term, sortBy, sortDirection, active);
+        List<FavoritePodcast> favoritePodcasts = favoritePodcastRepository.findAll(spec);
+        List<FavoritePodcastShortResponse> response = favoritePodcastMapper.listFavoritePodcastToListFavoritePodcastShortResponse(favoritePodcasts);
+        return response;
+    }
 
-    public PaginationResponse<List<FavoritePodcastResponse>> getFavoritePodcasts(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
+    public PaginationResponse<List<FavoritePodcastShortResponse>> getFavoritePodcasts(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
         log.info("Start: Get favorite podcasts with search term: {}, sort by: {}, sort direction: {}, and active: {}", 
                 term, sortBy != null ? String.join(",", sortBy) : null, 
                 sortDirection != null ? String.join(",", sortDirection) : null, active);
@@ -71,10 +86,13 @@ public class FavoritePodcastService {
             sortBy = new String[] {"lastSeen"};
         }
         term = user.getEmail();
+        if(active == null) {
+        	active = true;
+        }
         FavoritePodcastSpecification spec = new FavoritePodcastSpecification(term, sortBy, sortDirection, active);
         Page<FavoritePodcast> pageFavoritePodcast = favoritePodcastRepository.findAll(spec, pageable);
-        Page<FavoritePodcastResponse> pageData = favoritePodcastMapper.pageFavoritePodcastToPageFavoritePodcastResponse(pageFavoritePodcast);
-        PaginationResponse<List<FavoritePodcastResponse>> response = 
+        Page<FavoritePodcastShortResponse> pageData = favoritePodcastMapper.pageFavoritePodcastToPageFavoritePodcastShortResponse(pageFavoritePodcast);
+        PaginationResponse<List<FavoritePodcastShortResponse>> response = 
                 PaginationUtils.buildPaginationResponse(pageable, pageData);
         log.info("End: Function get favorite podcasts success");
         return response;

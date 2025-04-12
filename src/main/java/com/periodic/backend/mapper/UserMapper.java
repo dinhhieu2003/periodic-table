@@ -10,7 +10,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Component;
 
+import com.periodic.backend.domain.entity.Element;
 import com.periodic.backend.domain.entity.User;
+import com.periodic.backend.domain.response.favoriteElement.FavoriteElementShortResponse;
 import com.periodic.backend.domain.response.user.GetUserResponse;
 import com.periodic.backend.domain.response.user.ProfileResponse;
 import com.periodic.backend.domain.response.user.ToggleActiveResponse;
@@ -39,6 +41,7 @@ public interface UserMapper {
 	
 	default ProfileResponse userToProfileResponse(User user) {
 	    if (user == null) return null;
+	    
 	    return ProfileResponse.builder()
 	        .id(user.getId())
 	        .email(user.getEmail())
@@ -46,10 +49,6 @@ public interface UserMapper {
 	        .avatar(user.getAvatar())
 	        .role(user.getRole())
 	        .active(user.isActive())
-	        .favoriteElements(user.getFavoriteElements())
-	        .viewedElements(user.getViewedElements())
-	        .favoritePodcasts(user.getFavoritePodcasts())
-	        .viewedPodcasts(user.getViewedPodcasts())
 	        .build();
 	}
 

@@ -14,6 +14,7 @@ import com.periodic.backend.domain.entity.FavoriteElement;
 import com.periodic.backend.domain.entity.User;
 import com.periodic.backend.domain.response.favoriteElement.CheckActiveFavoriteElementResponse;
 import com.periodic.backend.domain.response.favoriteElement.FavoriteElementResponse;
+import com.periodic.backend.domain.response.favoriteElement.FavoriteElementShortResponse;
 import com.periodic.backend.domain.response.favoriteElement.ToggleActiveFavoriteElementResponse;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.mapper.FavoriteElementMapper;
@@ -60,7 +61,7 @@ public class FavoriteElementService {
 		return response;
 	}
 	
-	public PaginationResponse<List<FavoriteElementResponse>> getFavoriteElements(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
+	public PaginationResponse<List<FavoriteElementShortResponse>> getFavoriteElements(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
 		log.info("Start: Get favorite elements with search term: {}, sort by: {}, sort direction: {}, and active: {}", 
 				term, sortBy != null ? String.join(",", sortBy) : null, 
 				sortDirection != null ? String.join(",", sortDirection) : null, active);
@@ -71,10 +72,13 @@ public class FavoriteElementService {
 			sortBy = new String[] {"lastSeen"};
 		}
 		term = user.getEmail();
+		if(active == null) {
+			active = true;
+		}
 		FavoriteElementSpecification spec = new FavoriteElementSpecification(term, sortBy, sortDirection, active);
 		Page<FavoriteElement> pageFavoriteElement = favoriteElementRepository.findAll(spec, pageable);
-		Page<FavoriteElementResponse> pageData = favoriteElementMapper.pageFavoriteElementToPageFavoriteElementResponse(pageFavoriteElement);
-		PaginationResponse<List<FavoriteElementResponse>> response = 
+		Page<FavoriteElementShortResponse> pageData = favoriteElementMapper.pageFavoriteElementToPageFavoriteElementShortResponse(pageFavoriteElement);
+		PaginationResponse<List<FavoriteElementShortResponse>> response = 
 				PaginationUtils.buildPaginationResponse(pageable, pageData);
 		log.info("End: Function get favorite elements success");
 		return response;

@@ -14,6 +14,7 @@ import com.periodic.backend.domain.entity.User;
 import com.periodic.backend.domain.entity.ViewedElement;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.domain.response.viewedElement.ViewedElementResponse;
+import com.periodic.backend.domain.response.viewedElement.ViewedElementShortResponse;
 import com.periodic.backend.mapper.ViewedElementMapper;
 import com.periodic.backend.repository.ViewedElementRepository;
 import com.periodic.backend.repository.specification.ViewedElementSpecification;
@@ -53,7 +54,7 @@ public class ViewedElementService {
         return viewedElementResponse;
 	}
 	
-	public PaginationResponse<List<ViewedElementResponse>> getViewedElements(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
+	public PaginationResponse<List<ViewedElementShortResponse>> getViewedElements(Pageable pageable, String term, String[] sortBy, String[] sortDirection, Boolean active) {
 		log.info("Start: Get viewed elements with search term: {}, sort by: {}, sort direction: {}, and active: {}", 
 				term, sortBy != null ? String.join(",", sortBy) : null, 
 				sortDirection != null ? String.join(",", sortDirection) : null, active);
@@ -66,10 +67,13 @@ public class ViewedElementService {
         if(sortBy == null) {
         	sortBy = new String[]{"lastSeen"};
         }
+        if(active == null) {
+        	active = true;
+        }
         ViewedElementSpecification specification = new ViewedElementSpecification(term, sortBy, sortDirection, active);
         Page<ViewedElement> pageViewedElement = viewedElementRepository.findAll(specification, pageable);
-        Page<ViewedElementResponse> pageData = viewedElementMapper.pageViewedElementToPageViewedElementResponse(pageViewedElement);
-        PaginationResponse<List<ViewedElementResponse>> response = PaginationUtils.buildPaginationResponse(pageable, pageData);
+        Page<ViewedElementShortResponse> pageData = viewedElementMapper.pageViewedElementToPageViewedElementShortResponse(pageViewedElement);
+        PaginationResponse<List<ViewedElementShortResponse>> response = PaginationUtils.buildPaginationResponse(pageable, pageData);
         log.info("End: function get viewed elements of {}", user.getEmail());
         return response;
 	}
