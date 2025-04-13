@@ -39,7 +39,7 @@ public interface FavoriteElementMapper {
         			return new FavoriteElementShortResponse(
         					element.getName(),
         					element.getSymbol(),
-        					element.getImage());
+        					element.getImage(), element.getId());
         		})
         		.collect(Collectors.toList());
 		return response;

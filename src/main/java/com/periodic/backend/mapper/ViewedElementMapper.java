@@ -37,7 +37,8 @@ public interface ViewedElementMapper {
 					Element element = vw.getElement();
 					return new ViewedElementShortResponse(
 							element.getName(), element.getSymbol(),
-							element.getImage(), vw.getLastSeen());
+							element.getImage(), vw.getLastSeen(),
+							element.getId());
 				})
 				.collect(Collectors.toList());
 		return response;

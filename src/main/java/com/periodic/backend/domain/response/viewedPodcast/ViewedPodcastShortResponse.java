@@ -15,4 +15,5 @@ public class ViewedPodcastShortResponse {
 	private String title;
 	private String elementName;
 	private Instant lastSeen;
+	private Long podcastId;
 }

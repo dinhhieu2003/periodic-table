@@ -40,7 +40,8 @@ public interface ViewedPodcastMapper {
     				String title = podcast.getTitle();
     				String elementName = podcast.getElement().getName();
     				Instant lastSeen = vw.getLastSeen();
-    				return new ViewedPodcastShortResponse(title, elementName, lastSeen);
+    				return new ViewedPodcastShortResponse(title, elementName, lastSeen,
+    						podcast.getId());
     			})
     			.collect(Collectors.toList());
     	return response;

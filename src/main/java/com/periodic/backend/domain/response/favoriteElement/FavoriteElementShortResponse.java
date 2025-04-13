@@ -13,4 +13,5 @@ public class FavoriteElementShortResponse {
 	private String elementName;
 	private String symbol;
 	private String image;
+	private Long elementId;
 }

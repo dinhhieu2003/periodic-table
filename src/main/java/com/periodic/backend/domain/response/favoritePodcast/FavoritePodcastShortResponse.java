@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class FavoritePodcastShortResponse {
 	private String title;
 	private String elementName;
+	private Long podcastId;
 }

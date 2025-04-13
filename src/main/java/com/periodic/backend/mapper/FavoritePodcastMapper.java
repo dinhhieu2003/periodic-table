@@ -39,7 +39,8 @@ public interface FavoritePodcastMapper {
     				Podcast podcast = fav.getPodcast();
     				String title = podcast.getTitle();
     				String elementName = podcast.getElement().getName();
-    				return new FavoritePodcastShortResponse(title, elementName);
+    				return new FavoritePodcastShortResponse(title, elementName,
+    						podcast.getId());
     			})
     			.collect(Collectors.toList());
     	return response;

@@ -16,4 +16,5 @@ public class ViewedElementShortResponse {
 	private String symbol;
 	private String image;
 	private Instant lastSeen;
+	private Long elementId;
 }
