@@ -1,5 +1,8 @@
 package com.periodic.backend.service;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -8,8 +11,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.periodic.backend.domain.dto.notification.NotificationPayload;
 import com.periodic.backend.domain.entity.Element;
+import com.periodic.backend.domain.entity.FavoriteElement;
 import com.periodic.backend.domain.entity.Podcast;
+import com.periodic.backend.domain.entity.User;
 import com.periodic.backend.domain.request.podcast.CreatePodcastRequest;
 import com.periodic.backend.domain.request.podcast.UpdatePodcastRequest;
 import com.periodic.backend.domain.response.pagination.PaginationResponse;
@@ -19,6 +25,7 @@ import com.periodic.backend.domain.response.podcast.ToggleActivePodcastResponse;
 import com.periodic.backend.domain.response.podcast.UpdatePodcastResponse;
 import com.periodic.backend.exception.AppException;
 import com.periodic.backend.mapper.PodcastMapper;
+import com.periodic.backend.repository.FavoriteElementRepository;
 import com.periodic.backend.repository.PodcastRepository;
 import com.periodic.backend.repository.specification.PodcastSpecification;
 import com.periodic.backend.util.PaginationUtils;
@@ -33,6 +40,11 @@ public class PodcastService {
 	private final PodcastRepository podcastRepository;
 	private final ElementService elementService;
 	private final PodcastMapper podcastMapper;
+	private final FavoriteElementRepository favoriteElementRepository;
+	private final NotificationService notificationService;
+	private final NotificationPublisher notificationPublisher;
+
+	private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 	
 	public CreatePodcastResponse createPodcast(CreatePodcastRequest request) {
 		log.info("Start: Function create podcast");
@@ -41,6 +53,51 @@ public class PodcastService {
 		podcast.setElement(element);
 		Podcast newPodcast = podcastRepository.save(podcast);
 		log.info("Save new podcast into database success");
+
+		// --- Notification Logic --- 
+		try {
+			Long elementId = element.getId();
+			List<FavoriteElement> favoriteElements = favoriteElementRepository.findByElementIdAndIsActiveTrue(elementId);
+			log.info("Found {} active favorites for elementId {}. Sending notifications...", favoriteElements.size(), elementId);
+
+			for (FavoriteElement favElement : favoriteElements) {
+				User user = favElement.getUser();
+				if (user == null) {
+					log.warn("FavoriteElement {} has null user, skipping notification.", favElement.getId());
+					continue;
+				}
+				Long userId = user.getId();
+				String message = String.format("New podcast '%s' is available for element '%s'.", newPodcast.getTitle(), element.getName());
+				String notificationType = "NEW_PODCAST";
+
+				try {
+					// 1. Save notification to DB
+					notificationService.createAndSaveNotification(userId, notificationType, message, newPodcast.getId());
+
+					// 2. Prepare payload for WebSocket
+					NotificationPayload payload = NotificationPayload.builder()
+							.type(notificationType)
+							.message(message)
+							.relatedId(newPodcast.getId())
+							.timestamp(Instant.now().atOffset(ZoneOffset.UTC).format(ISO_FORMATTER)) // Use ISO 8601 format
+							.build();
+
+					// 3. Publish via WebSocket
+					notificationPublisher.publishNotificationToUser(userId, payload);
+					log.debug("Sent NEW_PODCAST notification to userId {} for podcastId {}", userId, newPodcast.getId());
+
+				} catch (Exception innerEx) {
+					log.error("Failed to send notification for podcastId {} to userId {}: {}", 
+							  newPodcast.getId(), userId, innerEx.getMessage(), innerEx);
+					// Continue to next user even if one fails
+				}
+			}
+		} catch (Exception e) {
+			log.error("Error occurred during notification process for new podcastId {}: {}", newPodcast.getId(), e.getMessage(), e);
+			// Do not re-throw, podcast creation itself was successful
+		}
+		// --- End Notification Logic ---
+
 		CreatePodcastResponse response = podcastMapper.podcastToCreatePodcastResponse(newPodcast);
 		log.info("End: Function create podcast success");
 		return response;

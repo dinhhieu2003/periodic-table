@@ -81,3 +81,5 @@ logs/
 *.bak
 *.swp
 *~.nib
+
+*.cursorignore

@@ -26,6 +26,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import jakarta.persistence.CascadeType;
 
 @Entity
 @Table(name="users")
@@ -66,6 +67,9 @@ public class User extends BaseEntity implements UserDetails {
     
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<ViewedPodcast> viewedPodcasts = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Notification> notifications = new ArrayList<>();
     
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

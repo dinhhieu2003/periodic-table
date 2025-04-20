@@ -1,0 +1,67 @@
+Files Added/Modified
+======================
+*   `pom.xml`: Added `spring-boot-starter-websocket` dependency.
+*   `src/main/java/com/periodic/backend/config/WebSocketConfig.java`: Added - Configures STOMP endpoint and Redis message broker relay.
+*   `src/main/java/com/periodic/backend/domain/dto/notification/NotificationPayload.java`: Added - DTO for WebSocket message payload.
+*   `src/main/java/com/periodic/backend/domain/entity/Notification.java`: Added - JPA entity for storing notification details.
+*   `src/main/java/com/periodic/backend/domain/entity/User.java`: Modified - Added `@OneToMany` relationship to `Notification`.
+*   `src/main/java/com/periodic/backend/repository/NotificationRepository.java`: Added - JPA repository for `Notification` entity with custom finders.
+*   `src/main/java/com/periodic/backend/service/NotificationService.java`: Added - Core service for managing notification persistence (save, get, mark read).
+*   `src/main/java/com/periodic/backend/service/NotificationPublisher.java`: Added - Service responsible for publishing notifications via `SimpMessagingTemplate`.
+*   `src/main/java/com/periodic/backend/service/PodcastService.java`: Modified - Integrated notification logic into `createPodcast` method.
+*   `src/main/java/com/periodic/backend/service/CommentElementService.java`: Modified - Integrated notification logic into `likeComment` method.
+*   `src/main/java/com/periodic/backend/service/CommentPodcastService.java`: Modified - Integrated notification logic into `likeComment` method.
+*   `src/main/java/com/periodic/backend/controller/NotificationController.java`: Added - Exposes REST API endpoints for managing notifications.
+*   `src/main/java/com/periodic/backend/domain/dto/notification/NotificationResponseDTO.java`: Added - DTO for REST API responses.
+*   `src/main/java/com/periodic/backend/mapper/NotificationMapper.java`: Added - MapStruct mapper for `Notification` entity and DTOs.
+*   `src/main/java/com/periodic/backend/util/constant/ErrorCode.java`: Modified - Added `NOTIFICATION_NOT_FOUND`.
+*   `src/main/java/com/periodic/backend/config/SecurityConfiguration.java`: Modified/Reviewed - Ensured `/ws` endpoint requires JWT authentication for the handshake.
+
+New Podcast Notification Workflow
+=================================
+1.  A request to create a new podcast arrives at the `PodcastController`.
+2.  The controller delegates to `PodcastService.createPodcast`.
+3.  `PodcastService` saves the new `Podcast` entity using `PodcastRepository`.
+4.  After successful saving, `PodcastService` retrieves the associated `Element` and queries `FavoriteElementRepository` to find all `User`s who have favorited this element.
+5.  For each favoriting user:
+    *   `PodcastService` calls `NotificationService.createAndSaveNotification` to persist a record of the notification (type="NEW_PODCAST", message, relatedId=newPodcastId) in the database via `NotificationRepository`.
+    *   `PodcastService` creates a `NotificationPayload` DTO containing the notification details (type, message, relatedId, timestamp).
+    *   `PodcastService` calls `NotificationPublisher.publishNotificationToUser`, passing the user's ID and the `NotificationPayload`.
+6.  `NotificationPublisher` uses `SimpMessagingTemplate.convertAndSendToUser` to send the payload to the user-specific destination (`/user/{userId}/queue/notifications`).
+7.  The message is relayed through the STOMP broker (Redis Pub/Sub).
+8.  Authenticated clients subscribed to their specific `/user/queue/notifications` destination receive the `NotificationPayload` via their WebSocket connection.
+9.  Error handling within `PodcastService` ensures that failures during the notification steps (persistence or publishing) are logged but do not prevent the successful creation of the podcast.
+
+Comment Like Notification Workflow
+==================================
+1.  A request to like a comment (element or podcast) arrives at the corresponding controller (`CommentElementController` or `CommentPodcastController`).
+2.  The controller delegates to the appropriate service (`CommentElementService.likeComment` or `CommentPodcastService.likeComment`).
+3.  The service finds the comment, increments its like count, and saves the updated comment entity using its repository.
+4.  After successful saving:
+    *   The service retrieves the `User` who authored the comment (the recipient).
+    *   It retrieves the `User` who performed the like action (the liker), typically using `SecurityUtils` and `UserService`.
+    *   A check is performed to ensure the liker's ID is not the same as the author's ID (self-like check).
+5.  If it's *not* a self-like:
+    *   The service calls `NotificationService.createAndSaveNotification` for the *author's* userId (type="COMMENT_LIKE", message mentioning liker and comment context, relatedId=commentId).
+    *   The service creates a `NotificationPayload` DTO.
+    *   The service calls `NotificationPublisher.publishNotificationToUser` for the *author's* userId and the payload.
+6.  `NotificationPublisher` sends the message via `SimpMessagingTemplate` to `/user/{authorId}/queue/notifications`.
+7.  The message is relayed via Redis Pub/Sub.
+8.  The comment author (if connected and subscribed) receives the `NotificationPayload`.
+9.  Error handling within the comment services ensures that failures during notification steps are logged but do not prevent the successful liking of the comment.
+
+API Interaction
+===============
+*   Clients (e.g., React Native app) interact with the notification system via standard REST API calls to `/api/v1/notifications`.
+*   **Fetching:** `GET /api/v1/notifications` (with standard Spring Data pagination parameters like `page`, `size`, `sort`) retrieves a paginated list of the authenticated user's notifications, typically mapped to `NotificationResponseDTO`.
+*   **Marking as Read:** `PATCH /api/v1/notifications/{id}/read` marks a specific notification (identified by `{id}`) as read for the authenticated user.
+*   **Marking All as Read:** `PATCH /api/v1/notifications/read-all` marks all unread notifications for the authenticated user as read.
+*   **Deleting:** `DELETE /api/v1/notifications/{id}` deletes a specific notification belonging to the authenticated user.
+*   All API endpoints require a valid JWT in the `Authorization` header for authentication and operate within the context of the authenticated user.
+
+WebSocket Client Interaction
+===========================
+1.  **Connection:** The client establishes a WebSocket connection to the backend endpoint `/ws` (or its SockJS fallback URLs). This initial HTTP handshake request must include a valid JWT for authentication, as enforced by `SecurityConfiguration`.
+2.  **Subscription:** Once connected, the client subscribes to its user-specific notification queue using the STOMP protocol. The destination is `/user/queue/notifications`. The `/user` prefix is handled by the Spring message broker, ensuring the client only receives messages targeted specifically to their authenticated user ID.
+3.  **Receiving Notifications:** When the backend publishes a notification for that user (triggered by events like new podcasts or comment likes), the `NotificationPublisher` sends a message to `/user/{userId}/queue/notifications`. The STOMP broker (Redis) relays this message to the subscribed client.
+4.  **Payload:** The client receives messages containing a JSON payload corresponding to the `NotificationPayload` DTO, including fields like `type`, `message`, `relatedId`, and `timestamp`. The client uses this information to display the notification appropriately. 

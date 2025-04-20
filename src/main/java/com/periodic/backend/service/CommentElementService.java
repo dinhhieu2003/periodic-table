@@ -1,6 +1,10 @@
 package com.periodic.backend.service;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.periodic.backend.domain.dto.notification.NotificationPayload;
 import com.periodic.backend.domain.entity.CommentElement;
 import com.periodic.backend.domain.entity.Element;
 import com.periodic.backend.domain.entity.User;
@@ -22,6 +27,7 @@ import com.periodic.backend.domain.response.pagination.PaginationResponse;
 import com.periodic.backend.exception.AppException;
 import com.periodic.backend.mapper.CommentElementMapper;
 import com.periodic.backend.repository.CommentElementRepository;
+import com.periodic.backend.security.SecurityUtils;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.ErrorCode;
 
@@ -35,6 +41,10 @@ public class CommentElementService {
     private final ElementService elementService;
     private final UserService userService;
     private final CommentElementMapper commentElementMapper;
+    private final NotificationService notificationService;
+    private final NotificationPublisher notificationPublisher;
+
+    private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     
     public CreateCommentElementResponse createComment(CreateCommentElementRequest request, String username) {
         log.info("Start: Create a new element comment");
@@ -65,7 +75,7 @@ public class CommentElementService {
         } else if (userId != null) {
             log.info("Find all comments by user ID {}", userId);
             pageComment = commentElementRepository.findByUserId(pageable, userId);
-        } else if (!term.isEmpty()) {
+        } else if (term != null && !term.isEmpty()) { // Check for null before isEmpty
             log.info("Find all comments containing text: {}", term);
             pageComment = commentElementRepository.findByContentContainingIgnoreCase(pageable, term);
         } else {
@@ -129,6 +139,55 @@ public class CommentElementService {
         CommentElement comment = findCommentById(id);
         comment.setLikes(comment.getLikes() + 1);
         CommentElement updatedComment = commentElementRepository.save(comment);
+        log.info("Element comment {} like count incremented.", id);
+
+        // --- Notification Logic --- 
+        try {
+            User author = updatedComment.getUser();
+            if (author == null) {
+                log.warn("CommentElement {} has null author, cannot send like notification.", updatedComment.getId());
+                return commentElementMapper.commentElementToLikeCommentElementResponse(updatedComment);
+            }
+            Long authorUserId = author.getId();
+
+            // Get liker details
+            String likerUsername = SecurityUtils.getCurrentUserLogin()
+                    .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+            User liker = userService.getUserByEmail(likerUsername);
+            Long likerUserId = liker.getId();
+
+            // Check for self-like
+            if (Objects.equals(likerUserId, authorUserId)) {
+                log.info("User {} liked their own element comment {}, no notification sent.", likerUserId, updatedComment.getId());
+            } else {
+                String elementName = updatedComment.getElement() != null ? updatedComment.getElement().getName() : "Unknown Element";
+                String message = String.format("%s liked your comment on element '%s'.", liker.getName(), elementName);
+                String notificationType = "COMMENT_LIKE_ELEMENT";
+
+                // 1. Save notification to DB
+                // related id is element id
+                Long elementId = updatedComment.getElement().getId();
+                notificationService.createAndSaveNotification(authorUserId, notificationType, message, elementId);
+
+                // 2. Prepare payload for WebSocket
+                NotificationPayload payload = NotificationPayload.builder()
+                        .type(notificationType)
+                        .message(message)
+                        .relatedId(elementId)
+                        .timestamp(Instant.now().atOffset(ZoneOffset.UTC).format(ISO_FORMATTER))
+                        .build();
+
+                // 3. Publish via WebSocket
+                notificationPublisher.publishNotificationToUser(authorUserId, payload);
+                log.info("Sent COMMENT_LIKE notification to author {} for element comment {} liked by user {}", authorUserId, updatedComment.getId(), likerUserId);
+            }
+
+        } catch (Exception e) {
+            log.error("Error occurred during notification process for element comment like (commentId: {}): {}", updatedComment.getId(), e.getMessage(), e);
+            // Do not re-throw, the like itself was successful
+        }
+        // --- End Notification Logic ---
+
         LikeCommentElementResponse response = commentElementMapper.commentElementToLikeCommentElementResponse(updatedComment);
         log.info("End: Function like element comment id {} success", id);
         return response;

@@ -43,7 +43,10 @@ public enum ErrorCode {
 	NOT_AUTHORIZED(7002, "Not authorized to perform this action", HttpStatus.FORBIDDEN),
 	
 	// ====== FAVORITE_ELEMENT ======
-	FAVORITE_ELEMENT_NOT_FOUND(8001, "Favorite element not found", HttpStatus.NOT_FOUND);
+	FAVORITE_ELEMENT_NOT_FOUND(8001, "Favorite element not found", HttpStatus.NOT_FOUND),
+	
+	// ====== NOTIFICATION ======
+	NOTIFICATION_NOT_FOUND(9001, "Notification not found", HttpStatus.NOT_FOUND);
 	
 	private final int code;
 	private final String message;

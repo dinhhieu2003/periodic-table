@@ -1,6 +1,10 @@
 package com.periodic.backend.service;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.periodic.backend.domain.dto.notification.NotificationPayload;
 import com.periodic.backend.domain.entity.CommentPodcast;
 import com.periodic.backend.domain.entity.Podcast;
 import com.periodic.backend.domain.entity.User;
@@ -23,6 +28,7 @@ import com.periodic.backend.exception.AppException;
 import com.periodic.backend.mapper.CommentPodcastMapper;
 import com.periodic.backend.repository.CommentPodcastRepository;
 import com.periodic.backend.repository.PodcastRepository;
+import com.periodic.backend.security.SecurityUtils;
 import com.periodic.backend.util.PaginationUtils;
 import com.periodic.backend.util.constant.ErrorCode;
 
@@ -36,7 +42,11 @@ public class CommentPodcastService {
     private final PodcastRepository podcastRepository;
     private final CommentPodcastMapper commentPodcastMapper;
     private final UserService userService;
-    
+    private final NotificationService notificationService;
+    private final NotificationPublisher notificationPublisher;
+
+    private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+
     public CreateCommentPodcastResponse createComment(CreateCommentPodcastRequest request, String username) {
         log.info("Start: Create a new podcast comment");
         
@@ -67,7 +77,7 @@ public class CommentPodcastService {
         } else if (userId != null) {
             log.info("Find all comments by user ID {}", userId);
             pageComment = commentPodcastRepository.findByUserId(pageable, userId);
-        } else if (!term.isEmpty()) {
+        } else if (term != null && !term.isEmpty()) {
             log.info("Find all comments containing text: {}", term);
             pageComment = commentPodcastRepository.findByContentContainingIgnoreCase(pageable, term);
         } else {
@@ -131,6 +141,54 @@ public class CommentPodcastService {
         CommentPodcast comment = findCommentById(id);
         comment.setLikes(comment.getLikes() + 1);
         CommentPodcast updatedComment = commentPodcastRepository.save(comment);
+        log.info("Podcast comment {} like count incremented.", id);
+
+        // --- Notification Logic ---
+        try {
+            User author = updatedComment.getUser();
+            if (author == null) {
+                log.warn("CommentPodcast {} has null author, cannot send like notification.", updatedComment.getId());
+                return commentPodcastMapper.commentPodcastToLikeCommentPodcastResponse(updatedComment);
+            }
+            Long authorUserId = author.getId();
+
+            // Get liker details
+            String likerUsername = SecurityUtils.getCurrentUserLogin()
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+            User liker = userService.getUserByEmail(likerUsername);
+            Long likerUserId = liker.getId();
+
+            // Check for self-like
+            if (Objects.equals(likerUserId, authorUserId)) {
+                log.info("User {} liked their own podcast comment {}, no notification sent.", likerUserId, updatedComment.getId());
+            } else {
+                String podcastTitle = updatedComment.getPodcast() != null ? updatedComment.getPodcast().getTitle() : "Unknown Podcast";
+                String message = String.format("%s liked your comment on podcast '%s'.", liker.getName(), podcastTitle);
+                String notificationType = "COMMENT_LIKE_PODCAST";
+
+                // 1. Save notification to DB
+                // related id is this podcast id
+                Long podcastId = updatedComment.getPodcast().getId();
+                notificationService.createAndSaveNotification(authorUserId, notificationType, message, podcastId);
+
+                // 2. Prepare payload for WebSocket
+                NotificationPayload payload = NotificationPayload.builder()
+                    .type(notificationType)
+                    .message(message)
+                    .relatedId(podcastId)
+                    .timestamp(Instant.now().atOffset(ZoneOffset.UTC).format(ISO_FORMATTER))
+                    .build();
+
+                // 3. Publish via WebSocket
+                notificationPublisher.publishNotificationToUser(authorUserId, payload);
+                log.info("Sent COMMENT_LIKE notification to author {} for podcast comment {} liked by user {}", authorUserId, updatedComment.getId(), likerUserId);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred during notification process for podcast comment like (commentId: {}): {}", updatedComment.getId(), e.getMessage(), e);
+            // Do not re-throw, the like itself was successful
+        }
+        // --- End Notification Logic ---
+
         LikeCommentPodcastResponse response = commentPodcastMapper.commentPodcastToLikeCommentPodcastResponse(updatedComment);
         log.info("End: Function like podcast comment id {} success", id);
         return response;

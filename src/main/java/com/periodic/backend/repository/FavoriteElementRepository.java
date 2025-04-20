@@ -1,5 +1,6 @@
 package com.periodic.backend.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,4 +13,5 @@ import com.periodic.backend.domain.entity.FavoriteElement;
 public interface FavoriteElementRepository extends JpaRepository<FavoriteElement, Long>, JpaSpecificationExecutor<FavoriteElement> {
 	Optional<FavoriteElement> findByUser_IdAndElement_Id(Long userId, Long elementId);
 	Optional<FavoriteElement> findByElementId(Long elementId);
+	List<FavoriteElement> findByElementIdAndIsActiveTrue(Long elementId);
 }
