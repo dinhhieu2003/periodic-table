@@ -138,12 +138,11 @@ public class CommentElementService {
         log.info("Start: Function like element comment id {}", id);
         CommentElement comment = findCommentById(id);
         comment.setLikes(comment.getLikes() + 1);
-        CommentElement updatedComment = commentElementRepository.save(comment);
         log.info("Element comment {} like count incremented.", id);
-
+        CommentElement updatedComment = new CommentElement();
         // --- Notification Logic --- 
         try {
-            User author = updatedComment.getUser();
+            User author = comment.getUser();
             if (author == null) {
                 log.warn("CommentElement {} has null author, cannot send like notification.", updatedComment.getId());
                 return commentElementMapper.commentElementToLikeCommentElementResponse(updatedComment);
@@ -158,8 +157,10 @@ public class CommentElementService {
 
             // Check for self-like
             if (Objects.equals(likerUserId, authorUserId)) {
-                log.info("User {} liked their own element comment {}, no notification sent.", likerUserId, updatedComment.getId());
+                log.info("User {} liked their own element comment {}, no notification sent.", likerUserId, comment.getId());
+                throw new AppException(ErrorCode.CAN_NOT_SELF_LIKE);
             } else {
+            	updatedComment = commentElementRepository.save(comment);
                 String elementName = updatedComment.getElement() != null ? updatedComment.getElement().getName() : "Unknown Element";
                 String message = String.format("%s liked your comment on element '%s'.", liker.getName(), elementName);
                 String notificationType = "COMMENT_LIKE_ELEMENT";
@@ -178,12 +179,12 @@ public class CommentElementService {
                         .build();
 
                 // 3. Publish via WebSocket
-                notificationPublisher.publishNotificationToUser(authorUserId, payload);
+                notificationPublisher.publishNotificationToUser(author.getEmail(), payload);
                 log.info("Sent COMMENT_LIKE notification to author {} for element comment {} liked by user {}", authorUserId, updatedComment.getId(), likerUserId);
             }
 
         } catch (Exception e) {
-            log.error("Error occurred during notification process for element comment like (commentId: {}): {}", updatedComment.getId(), e.getMessage(), e);
+            log.error("Error occurred during notification process for element comment like (commentId: {}): {}", comment.getId(), e.getMessage(), e);
             // Do not re-throw, the like itself was successful
         }
         // --- End Notification Logic ---

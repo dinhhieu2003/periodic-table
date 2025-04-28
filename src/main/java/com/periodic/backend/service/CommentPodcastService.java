@@ -140,15 +140,15 @@ public class CommentPodcastService {
         log.info("Start: Function like podcast comment id {}", id);
         CommentPodcast comment = findCommentById(id);
         comment.setLikes(comment.getLikes() + 1);
-        CommentPodcast updatedComment = commentPodcastRepository.save(comment);
+        CommentPodcast updatedComment = new CommentPodcast();
         log.info("Podcast comment {} like count incremented.", id);
 
         // --- Notification Logic ---
         try {
-            User author = updatedComment.getUser();
+            User author = comment.getUser();
             if (author == null) {
-                log.warn("CommentPodcast {} has null author, cannot send like notification.", updatedComment.getId());
-                return commentPodcastMapper.commentPodcastToLikeCommentPodcastResponse(updatedComment);
+                log.warn("CommentPodcast {} has null author, cannot send like notification.", comment.getId());
+                return commentPodcastMapper.commentPodcastToLikeCommentPodcastResponse(comment);
             }
             Long authorUserId = author.getId();
 
@@ -160,8 +160,10 @@ public class CommentPodcastService {
 
             // Check for self-like
             if (Objects.equals(likerUserId, authorUserId)) {
-                log.info("User {} liked their own podcast comment {}, no notification sent.", likerUserId, updatedComment.getId());
+                log.info("User {} liked their own podcast comment {}, no notification sent.", likerUserId, comment.getId());
+                throw new AppException(ErrorCode.CAN_NOT_SELF_LIKE);
             } else {
+            	updatedComment = commentPodcastRepository.save(comment);
                 String podcastTitle = updatedComment.getPodcast() != null ? updatedComment.getPodcast().getTitle() : "Unknown Podcast";
                 String message = String.format("%s liked your comment on podcast '%s'.", liker.getName(), podcastTitle);
                 String notificationType = "COMMENT_LIKE_PODCAST";
@@ -180,7 +182,7 @@ public class CommentPodcastService {
                     .build();
 
                 // 3. Publish via WebSocket
-                notificationPublisher.publishNotificationToUser(authorUserId, payload);
+                notificationPublisher.publishNotificationToUser(author.getEmail(), payload);
                 log.info("Sent COMMENT_LIKE notification to author {} for podcast comment {} liked by user {}", authorUserId, updatedComment.getId(), likerUserId);
             }
         } catch (Exception e) {

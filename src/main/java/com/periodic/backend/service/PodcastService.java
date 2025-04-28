@@ -83,7 +83,7 @@ public class PodcastService {
 							.build();
 
 					// 3. Publish via WebSocket
-					notificationPublisher.publishNotificationToUser(userId, payload);
+					notificationPublisher.publishNotificationToUser(user.getEmail(), payload);
 					log.debug("Sent NEW_PODCAST notification to userId {} for podcastId {}", userId, newPodcast.getId());
 
 				} catch (Exception innerEx) {

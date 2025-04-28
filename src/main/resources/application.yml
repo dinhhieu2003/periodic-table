@@ -34,7 +34,19 @@ spring:
         smtp:
           auth: true
           starttls:
-            enable: true       
+            enable: true
+            
+logging:
+  level:
+    root: INFO
+    com.periodic.backend: DEBUG
+    org.springframework: WARN
+    org.hibernate: ERROR
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{requestId}] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/application.log            
 
 # Config jwt
 ## env var

@@ -2,11 +2,15 @@ package com.periodic.backend.security;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -36,6 +40,40 @@ public class JwtTokenUtils {
 	
 	private final JwtEncoder jwtEncoder;
 	private final SecurityJwtConfiguration jwtConfiguration;
+	
+	public Authentication getAuthentication(String token) {
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder
+            .withSecretKey(this.jwtConfiguration.getSecretKey())
+            .macAlgorithm(JWT_ALGORITHM)
+            .build();
+        Jwt jwt = null;
+        try {
+            jwt = jwtDecoder.decode(token);
+        } catch (Exception e) {
+            System.out.println(">>> JWT token error: " + e.getMessage());
+            throw e;
+        }
+
+        String email = jwt.getSubject();
+        List<String> roles = jwt.getClaimAsStringList("roles");
+
+        List<SimpleGrantedAuthority> authorities = roles.stream()
+            .map(SimpleGrantedAuthority::new)
+            .collect(Collectors.toList());
+
+        org.springframework.security.core.userdetails.User principal =
+            new org.springframework.security.core.userdetails.User(
+                email,
+                "",          
+                authorities
+            );
+
+        return new UsernamePasswordAuthenticationToken(
+            principal,
+            token,
+            authorities
+        );
+	}
 	
 	public String createAccessToken(User user) {
 		Instant now = Instant.now();
