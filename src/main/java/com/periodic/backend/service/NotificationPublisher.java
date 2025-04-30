@@ -20,11 +20,13 @@ public class NotificationPublisher {
     private SimpUserRegistry simpUserRegistry;
     public void publishNotificationToUser(String username, NotificationPayload payload) {
     	log.info("Active WebSocket users: {}", simpUserRegistry.getUsers().stream().map(SimpUser::getName).toList());
-    	String userDestination = "/queue/notifications";
+    	log.info("Count active: {}", simpUserRegistry.getUserCount());
+    	String userDestination = "/topic/notifications";
 
         try {
             log.info("Publishing notification type '{}' to user {} at destination {}", payload.getType(), username, userDestination);
-            simpMessagingTemplate.convertAndSendToUser(username, userDestination, payload);
+//            simpMessagingTemplate.convertAndSendToUser(username, userDestination, payload);
+            simpMessagingTemplate.convertAndSend(userDestination, payload);
             log.info("Successfully published notification type '{}' to user {}", payload.getType(), username);
         } catch (Exception e) {
             log.error("Failed to publish notification type '{}' to user {}: {}", payload.getType(), username, e.getMessage(), e);

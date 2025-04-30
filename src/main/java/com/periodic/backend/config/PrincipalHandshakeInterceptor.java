@@ -7,12 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import com.periodic.backend.security.JwtTokenUtils;
 
-
+@Component
 public class PrincipalHandshakeInterceptor implements HandshakeInterceptor {
 	@Autowired
 	private JwtTokenUtils jwtTokenUtils;
